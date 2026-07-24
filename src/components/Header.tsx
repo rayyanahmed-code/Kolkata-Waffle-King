@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sparkles, Phone, MapPin, Clock, ShoppingBag } from 'lucide-react';
+import { Phone, ShoppingBag } from 'lucide-react';
 import { restaurantConfig } from '../config/restaurantConfig';
 
 interface HeaderProps {
@@ -35,22 +35,9 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
 
           <div>
-            <div className="flex items-center gap-1.5">
-              <h1 className="font-serif font-bold text-base tracking-wide text-[#FAF6F0] group-hover:text-[#E5A93B] transition-colors leading-tight">
-                {restaurantConfig.name}
-              </h1>
-            </div>
-            <div className="flex items-center gap-2 text-[11px] text-[#FAF6F0]/70 font-medium">
-              <span className="flex items-center gap-1 text-emerald-400 font-semibold">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                Open Now
-              </span>
-              <span>•</span>
-              <span className="flex items-center gap-0.5 text-[#E5A93B]">
-                <Clock className="w-3 h-3" />
-                {restaurantConfig.estimatedTime}
-              </span>
-            </div>
+            <h1 className="font-serif font-bold text-base tracking-wide text-[#FAF6F0] group-hover:text-[#E5A93B] transition-colors leading-tight">
+              {restaurantConfig.name}
+            </h1>
           </div>
         </button>
 
