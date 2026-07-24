@@ -1,0 +1,75 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Outfit", system-ui, -apple-system, sans-serif;
+  --font-serif: "Playfair Display", Georgia, serif;
+  
+  --color-choco-950: #180E0A;
+  --color-choco-900: #2C1810;
+  --color-choco-800: #3D2218;
+  --color-choco-700: #543123;
+  --color-gold-500: #E5A93B;
+  --color-gold-400: #F3BF59;
+  --color-gold-600: #C78D24;
+  --color-beige-100: #FAF6F0;
+  --color-beige-200: #F2E9DE;
+  --color-beige-300: #E6D7C3;
+}
+
+@layer base {
+  body {
+    font-family: var(--font-sans);
+    background-color: var(--color-choco-950);
+    color: var(--color-choco-900);
+  }
+}
+
+/* Custom animations and utilities */
+@keyframes pulseDot {
+  0%, 100% {
+    transform: scale(0.7);
+    opacity: 0.4;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 1;
+  }
+}
+
+.typing-dot {
+  animation: pulseDot 1.2s infinite ease-in-out;
+}
+
+.typing-dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.typing-dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+/* Hide scrollbar for clean UI where appropriate */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Custom smooth scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(44, 24, 16, 0.2);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(229, 169, 59, 0.4);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(229, 169, 59, 0.7);
+}
+
