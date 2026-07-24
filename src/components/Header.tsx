@@ -1,18 +1,15 @@
 import React from 'react';
-import { Phone, ShoppingBag } from 'lucide-react';
+import { Phone } from 'lucide-react';
 import { restaurantConfig } from '../config/restaurantConfig';
 
 interface HeaderProps {
-  cartItemCount: number;
-  totalAmount: number;
-  onOpenCart: () => void;
+  cartItemCount?: number;
+  totalAmount?: number;
+  onOpenCart?: () => void;
   onResetOrder?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
-  cartItemCount,
-  totalAmount,
-  onOpenCart,
   onResetOrder,
 }) => {
   return (
@@ -51,20 +48,6 @@ export const Header: React.FC<HeaderProps> = ({
           >
             <Phone className="w-4 h-4 text-[#E5A93B]" />
           </a>
-
-          {/* Cart Shortcut */}
-          {cartItemCount > 0 && (
-            <button
-              onClick={onOpenCart}
-              className="relative flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#E5A93B] hover:bg-[#F3BF59] text-[#180E0A] font-bold text-xs transition-all shadow-md shadow-[#E5A93B]/20 active:scale-95"
-            >
-              <ShoppingBag className="w-4 h-4" />
-              <span>₹{totalAmount}</span>
-              <span className="ml-0.5 bg-[#180E0A] text-[#E5A93B] text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-extrabold">
-                {cartItemCount}
-              </span>
-            </button>
-          )}
         </div>
       </div>
     </header>

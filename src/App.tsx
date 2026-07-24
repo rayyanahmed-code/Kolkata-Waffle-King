@@ -51,14 +51,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-[#180E0A] text-[#FAF6F0] flex flex-col font-sans selection:bg-[#E5A93B] selection:text-[#180E0A]">
       {/* Top Brand Header */}
-      <Header
-        cartItemCount={totalCartCount}
-        totalAmount={totalCartAmount}
-        onOpenCart={() => {
-          // If items added, user can quickly trigger cart review
-        }}
-        onResetOrder={handleResetOrder}
-      />
+      <Header onResetOrder={handleResetOrder} />
 
       {/* Progress Bar (Visible once order starts) */}
       {currentStep > 0 && (

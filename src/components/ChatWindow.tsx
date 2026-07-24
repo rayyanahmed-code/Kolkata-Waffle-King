@@ -51,9 +51,9 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   };
 
   // Helper to add assistant message with typing delay
-  const addAssistantMessage = (text: string, delayMs = 600) => {
+  const addAssistantMessage = (text: string, delayMs = 600, skipScroll = false) => {
     setIsTyping(true);
-    scrollToBottom();
+    if (!skipScroll) scrollToBottom();
 
     setTimeout(() => {
       setIsTyping(false);
@@ -66,7 +66,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         },
       ]);
-      scrollToBottom();
+      if (!skipScroll) scrollToBottom();
     }, delayMs);
   };
 
@@ -91,7 +91,8 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
       hasInitializedRef.current = true;
       addAssistantMessage(
         `${restaurantConfig.assistant.greetingTitle}\n\n${restaurantConfig.assistant.greetingSubtitle}\n\n${restaurantConfig.assistant.greetingMessage}`,
-        300
+        300,
+        true
       );
     }
   }, []);
@@ -256,9 +257,9 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   });
 
   return (
-    <div className="w-full max-w-md mx-auto min-h-[calc(100vh-120px)] flex flex-col justify-between p-4 pb-24">
+    <div className="w-full max-w-md mx-auto flex flex-col p-4 pb-24 space-y-3">
       {/* Messages Feed */}
-      <div className="flex-1 space-y-3">
+      <div className="space-y-3">
         {messages.map((msg) => (
           <MessageBubble
             key={msg.id}
