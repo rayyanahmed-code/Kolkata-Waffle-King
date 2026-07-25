@@ -13,7 +13,7 @@ export type StepId =
 export interface MenuItem {
   id: string;
   name: string;
-  category: 'waffles' | 'beverages' | 'addons';
+  category: string;
   subcategory: string;
   price: number;
   description: string;

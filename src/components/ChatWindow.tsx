@@ -51,7 +51,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   const [phoneInput, setPhoneInput] = useState('');
   const [nameError, setNameError] = useState('');
   const [phoneError, setPhoneError] = useState('');
-  const [activeMenuCategory, setActiveMenuCategory] = useState<string>('waffles');
+  const [activeMenuCategory, setActiveMenuCategory] = useState<string>('classic_waffles');
   const [searchQuery, setSearchQuery] = useState('');
   const [namePlaceholderIndex, setNamePlaceholderIndex] = useState(0);
 
