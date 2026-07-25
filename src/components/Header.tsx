@@ -1,7 +1,7 @@
 import React from 'react';
 import { Phone } from 'lucide-react';
 import { restaurantConfig } from '../config/restaurantConfig';
-import logoImg from '../assets/logo.jpg';
+import { LOGO_DATA_URI } from '../assets/logoData';
 
 interface HeaderProps {
   cartItemCount?: number;
@@ -24,7 +24,7 @@ export const Header: React.FC<HeaderProps> = ({
         >
           <div className="relative w-10 h-10 rounded-xl bg-[#2C1810] p-0.5 flex items-center justify-center shadow-lg shadow-[#E5A93B]/20 border border-[#E5A93B]/60">
             <img 
-              src={logoImg} 
+              src={LOGO_DATA_URI} 
               alt="Kolkata Waffle King Logo" 
               className="w-full h-full object-cover rounded-[9px]"
             />

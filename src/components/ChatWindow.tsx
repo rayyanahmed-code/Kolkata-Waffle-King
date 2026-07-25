@@ -12,7 +12,7 @@ import { CategorySelector } from './CategorySelector';
 import { MenuCard } from './MenuCard';
 import { OrderSummary } from './OrderSummary';
 import { CompletionModal } from './CompletionModal';
-import logoImg from '../assets/logo.jpg';
+import { LOGO_DATA_URI } from '../assets/logoData';
 
 const SAMPLE_NAMES = [
   'Rahul Sharma',
@@ -307,7 +307,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
           >
             <div className="inline-flex p-1 rounded-2xl bg-[#2C1810] border border-[#E5A93B]/60 shadow-xl overflow-hidden w-20 h-20 mx-auto">
               <img 
-                src={logoImg} 
+                src={LOGO_DATA_URI} 
                 alt="Kolkata Waffle King Logo" 
                 className="w-full h-full object-cover rounded-xl"
               />
