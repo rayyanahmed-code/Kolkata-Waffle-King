@@ -13,6 +13,18 @@ import { MenuCard } from './MenuCard';
 import { OrderSummary } from './OrderSummary';
 import { CompletionModal } from './CompletionModal';
 
+const SAMPLE_NAMES = [
+  'Rahul Sharma',
+  'Priya Das',
+  'Amit Roy',
+  'Ananya Banerjee',
+  'Saurav Sen',
+  'Pooja Gupta',
+  'Arpan Mukherjee',
+  'Sneha Roy',
+  'Rohan Chakraborty',
+];
+
 interface ChatWindowProps {
   order: OrderState;
   setOrder: React.Dispatch<React.SetStateAction<OrderState>>;
@@ -41,6 +53,15 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   const [phoneError, setPhoneError] = useState('');
   const [activeMenuCategory, setActiveMenuCategory] = useState<string>('waffles');
   const [searchQuery, setSearchQuery] = useState('');
+  const [namePlaceholderIndex, setNamePlaceholderIndex] = useState(0);
+
+  useEffect(() => {
+    if (activeStepId !== 'name') return;
+    const interval = setInterval(() => {
+      setNamePlaceholderIndex((prev) => (prev + 1) % SAMPLE_NAMES.length);
+    }, 2200);
+    return () => clearInterval(interval);
+  }, [activeStepId]);
 
   const chatEndRef = useRef<HTMLDivElement>(null);
 
@@ -134,7 +155,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
     const indianPhoneRegex = /^(?:\+?91)?[6-9]\d{9}$/;
 
     if (!indianPhoneRegex.test(cleanPhone)) {
-      setPhoneError('Please enter a valid 10-digit Indian phone number (e.g. 7449785471).');
+      setPhoneError('Please enter a valid 10-digit Indian phone number (e.g. 1234567890).');
       return;
     }
 
@@ -316,17 +337,35 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
               <User className="w-4 h-4 text-[#E5A93B]" />
               <span>Your Name</span>
             </label>
-            <input
-              type="text"
-              value={nameInput}
-              onChange={(e) => {
-                setNameInput(e.target.value);
-                if (nameError) setNameError('');
-              }}
-              placeholder="e.g. Rahul Sharma"
-              className="w-full px-3.5 py-2.5 text-sm bg-white border border-[#E6D7C3] rounded-xl text-[#2C1810] placeholder:text-[#2C1810]/40 focus:outline-none focus:ring-2 focus:ring-[#E5A93B]"
-              autoFocus
-            />
+            <div className="relative w-full">
+              <input
+                type="text"
+                value={nameInput}
+                onChange={(e) => {
+                  setNameInput(e.target.value);
+                  if (nameError) setNameError('');
+                }}
+                className="w-full px-3.5 py-2.5 text-sm bg-white border border-[#E6D7C3] rounded-xl text-[#2C1810] focus:outline-none focus:ring-2 focus:ring-[#E5A93B]"
+                autoFocus
+              />
+              {!nameInput && (
+                <div className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-sm text-[#2C1810]/40 flex items-center">
+                  <span>e.g.&nbsp;</span>
+                  <AnimatePresence mode="wait">
+                    <motion.span
+                      key={namePlaceholderIndex}
+                      initial={{ opacity: 0, y: 3 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -3 }}
+                      transition={{ duration: 0.35, ease: "easeInOut" }}
+                      className="inline-block font-normal"
+                    >
+                      {SAMPLE_NAMES[namePlaceholderIndex]}
+                    </motion.span>
+                  </AnimatePresence>
+                </div>
+              )}
+            </div>
             {nameError && (
               <p className="text-[11px] text-red-600 font-semibold">{nameError}</p>
             )}
@@ -363,7 +402,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                   setPhoneInput(e.target.value);
                   if (phoneError) setPhoneError('');
                 }}
-                placeholder="7449785471"
+                placeholder="1234567890"
                 maxLength={13}
                 className="w-full pl-12 pr-3.5 py-2.5 text-sm bg-white border border-[#E6D7C3] rounded-xl text-[#2C1810] placeholder:text-[#2C1810]/40 focus:outline-none focus:ring-2 focus:ring-[#E5A93B]"
                 autoFocus

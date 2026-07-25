@@ -1,7 +1,7 @@
 export const restaurantConfig = {
   name: 'Kolkata Waffle King',
   tagline: 'Freshly Baked Happiness in Every Bite',
-  whatsappNumber: '7449785471', // User provided test WhatsApp number
+  whatsappNumber: '1234567890',
   whatsappCountryCode: '91',
   currencySymbol: '₹',
   address: 'Park Street Area, Kolkata, West Bengal 700016',
