@@ -6,7 +6,7 @@ export function formatWhatsAppMessage(order: OrderState): string {
 
   // Calculate items list formatted
   const itemsText = cart
-    .map((c) => `• ${c.item.name} x${c.quantity} (₹${c.item.price * c.quantity})`)
+    .map((c) => `• ${c.item.name} × ${c.quantity} (₹${c.item.price * c.quantity})`)
     .join('\n');
 
   const subtotal = cart.reduce((acc, c) => acc + c.item.price * c.quantity, 0);
@@ -16,39 +16,50 @@ export function formatWhatsAppMessage(order: OrderState): string {
   let locationText = 'N/A (Pickup Order)';
   if (orderType === 'delivery' && location) {
     if (location.type === 'geo' && location.mapsUrl) {
-      locationText = `📍 Live Location: ${location.mapsUrl}`;
-      if (location.address) {
-        locationText += `\n(Approx. Address: ${location.address})`;
-      }
+      locationText = location.mapsUrl;
     } else if (location.address) {
-      locationText = `🏠 Manual Address: ${location.address}`;
+      locationText = location.address;
     }
   }
 
-  const instructionsText = specialInstructions.trim() ? specialInstructions.trim() : 'None';
+  const orderTypeText = orderType === 'delivery' ? 'Delivery' : 'Pickup';
+  const instructionsText = specialInstructions && specialInstructions.trim() ? specialInstructions.trim() : 'None';
 
-  const message = `🍫 *New Order - ${restaurantConfig.name}*
+  const message = `🍫 *NEW ORDER - ${restaurantConfig.name}*
 
-*Customer Name:* ${customerName}
-*Phone:* ${customerPhone}
-*Order Type:* ${orderType === 'delivery' ? '🚚 Delivery' : '🏃 Pickup'}
-*Location:*
+━━━━━━━━━━━━━━━━━━
+
+👤 *Customer*
+${customerName}
+
+📞 *Phone*
+${customerPhone}
+
+🚚 *Order Type*
+${orderTypeText}
+
+📍 *Delivery Location*
 ${locationText}
 
------------------
+━━━━━━━━━━━━━━━━━━
 
-*Items Ordered:*
+🧇 *ITEMS ORDERED*
+
 ${itemsText}
 
-*Subtotal:* ₹${subtotal}
-${orderType === 'delivery' ? `*Delivery Fee:* ₹${deliveryFee}\n` : ''}*Total Amount:* ₹${grandTotal}
+━━━━━━━━━━━━━━━━━━
 
------------------
+💰 *Subtotal:* ₹${subtotal}
 
-*Special Instructions:*
-${instructionsText}
+🚚 *Delivery Fee:* ₹${deliveryFee}
 
-Please contact customer to confirm order.`;
+💵 *Total Amount:* ₹${grandTotal}
+
+━━━━━━━━━━━━━━━━━━
+
+📝 *Special Instructions*
+
+${instructionsText}`;
 
   return message;
 }
