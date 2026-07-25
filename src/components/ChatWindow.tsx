@@ -119,6 +119,48 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
     }
   }, []);
 
+  // Reset local chat window state when order is reset
+  const handleLocalReset = () => {
+    setActiveStepId('welcome');
+    setNameInput('');
+    setPhoneInput('');
+    setNameError('');
+    setPhoneError('');
+    setSearchQuery('');
+    setActiveMenuCategory('classic_waffles');
+    setIsTyping(false);
+    setMessages([
+      {
+        id: `asst-init-${Date.now()}`,
+        sender: 'assistant',
+        text: `${restaurantConfig.assistant.greetingTitle}\n\n${restaurantConfig.assistant.greetingSubtitle}\n\n${restaurantConfig.assistant.greetingMessage}`,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      },
+    ]);
+    onResetOrder();
+  };
+
+  useEffect(() => {
+    if (currentStep === 0 && activeStepId !== 'welcome') {
+      setActiveStepId('welcome');
+      setNameInput('');
+      setPhoneInput('');
+      setNameError('');
+      setPhoneError('');
+      setSearchQuery('');
+      setActiveMenuCategory('classic_waffles');
+      setIsTyping(false);
+      setMessages([
+        {
+          id: `asst-init-${Date.now()}`,
+          sender: 'assistant',
+          text: `${restaurantConfig.assistant.greetingTitle}\n\n${restaurantConfig.assistant.greetingSubtitle}\n\n${restaurantConfig.assistant.greetingMessage}`,
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        },
+      ]);
+    }
+  }, [currentStep, activeStepId]);
+
   // STEP TRANSITION HANDLERS
 
   // Start Order -> Move to Step 1 (Name)
@@ -557,7 +599,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
               const waUrl = generateWhatsAppLink(order);
               window.open(waUrl, '_blank');
             }}
-            onNewOrder={onResetOrder}
+            onNewOrder={handleLocalReset}
           />
         )}
 

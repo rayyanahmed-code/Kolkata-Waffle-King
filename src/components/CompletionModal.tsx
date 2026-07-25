@@ -14,6 +14,12 @@ export const CompletionModal: React.FC<CompletionModalProps> = ({
   onNewOrder,
   customerName,
 }) => {
+  // Extract customer's first name
+  const rawFirstName = customerName ? customerName.trim().split(/\s+/)[0] : '';
+  const firstName = rawFirstName
+    ? rawFirstName.charAt(0).toUpperCase() + rawFirstName.slice(1)
+    : 'Friend';
+
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
@@ -33,7 +39,7 @@ export const CompletionModal: React.FC<CompletionModalProps> = ({
       {/* Title & Message */}
       <div className="space-y-2">
         <h2 className="font-serif font-extrabold text-2xl text-[#2C1810]">
-          Almost Done, {customerName || 'Friend'}! 🎉
+          Almost Done, {firstName}! 🎉
         </h2>
         <p className="text-sm font-semibold text-[#2C1810]/80 leading-relaxed max-w-sm mx-auto">
           Your order details are ready.
