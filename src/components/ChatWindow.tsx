@@ -12,6 +12,7 @@ import { CategorySelector } from './CategorySelector';
 import { MenuCard } from './MenuCard';
 import { OrderSummary } from './OrderSummary';
 import { CompletionModal } from './CompletionModal';
+import logoImg from '../assets/logo.jpg';
 
 const SAMPLE_NAMES = [
   'Rahul Sharma',
@@ -304,8 +305,12 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
             animate={{ opacity: 1, y: 0 }}
             className="mt-4 p-4 rounded-3xl bg-[#2C1810] border border-[#543123] shadow-2xl text-center space-y-4"
           >
-            <div className="inline-flex p-3 rounded-2xl bg-gradient-to-br from-[#E5A93B] to-[#C78D24] text-[#2C1810] text-3xl shadow-lg">
-              🧇
+            <div className="inline-flex p-1 rounded-2xl bg-[#2C1810] border border-[#E5A93B]/60 shadow-xl overflow-hidden w-20 h-20 mx-auto">
+              <img 
+                src={logoImg} 
+                alt="Kolkata Waffle King Logo" 
+                className="w-full h-full object-cover rounded-xl"
+              />
             </div>
             <div>
               <h2 className="font-serif font-bold text-xl text-[#FAF6F0]">
