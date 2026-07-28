@@ -22,7 +22,7 @@ export const Header: React.FC<HeaderProps> = ({
           className="flex items-center gap-2.5 text-left group transition-transform active:scale-98"
           title="Return to start"
         >
-          <div className="relative w-10 h-10 rounded-xl bg-[#2C1810] p-0.5 flex items-center justify-center shadow-lg shadow-[#E5A93B]/20 border border-[#E5A93B]/60">
+          <div className="relative w-10 h-10 rounded-xl bg-[#2C1810] p-0.5 flex items-center justify-center shadow-lg shadow-[#E5A93B]/20 border border-[#E5A93B]/60 overflow-hidden">
             <img 
               src={LOGO_DATA_URI} 
               alt="Kolkata Waffle King Logo" 
