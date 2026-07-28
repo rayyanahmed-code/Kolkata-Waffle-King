@@ -4,11 +4,15 @@ export const restaurantConfig = {
   whatsappNumber: '7449785471', // Restaurant's receiving WhatsApp number
   whatsappCountryCode: '91',
   currencySymbol: '₹',
-  address: 'Park Street Area, Kolkata, West Bengal 700016',
+  address: 'CIT Road, Beniapukur, Kolkata, West Bengal 700014',
+  location: {
+    latitude: 22.5482,
+    longitude: 88.3678,
+  },
   openingHours: '11:00 AM - 11:30 PM (Daily)',
   estimatedTime: '20-30 mins',
-  deliveryFee: 30, // Default estimated delivery charge in INR
-  freeDeliveryThreshold: 400, // Free delivery above 400 INR
+  deliveryFee: 30, // Base/default estimated delivery charge in INR
+  freeDeliveryThreshold: 300, // Free delivery above 300 INR for <= 2 km
   branding: {
     primaryColor: '#2C1810', // Dark Chocolate Brown
     accentColor: '#E5A93B',  // Golden Yellow

@@ -1,5 +1,6 @@
 import { OrderState } from '../types';
 import { restaurantConfig } from '../config/restaurantConfig';
+import { calculateDeliveryFee, getOrderDeliveryDistance } from './delivery';
 
 export function formatWhatsAppMessage(order: OrderState): string {
   const { customerName, customerPhone, orderType, location, cart, specialInstructions } = order;
@@ -10,7 +11,9 @@ export function formatWhatsAppMessage(order: OrderState): string {
     .join('\n');
 
   const subtotal = cart.reduce((acc, c) => acc + c.item.price * c.quantity, 0);
-  const deliveryFee = orderType === 'delivery' ? restaurantConfig.deliveryFee : 0;
+
+  const distanceKm = orderType === 'delivery' ? getOrderDeliveryDistance(location?.latitude, location?.longitude) : null;
+  const deliveryFee = orderType === 'delivery' ? calculateDeliveryFee(distanceKm, subtotal) : 0;
   const grandTotal = subtotal + deliveryFee;
 
   let locationText = 'N/A (Pickup Order)';
@@ -24,6 +27,7 @@ export function formatWhatsAppMessage(order: OrderState): string {
 
   const orderTypeText = orderType === 'delivery' ? 'Delivery' : 'Pickup';
   const instructionsText = specialInstructions && specialInstructions.trim() ? specialInstructions.trim() : 'None';
+  const distanceText = distanceKm !== null ? `${distanceKm.toFixed(2)} km` : 'Manual Address';
 
   const message = `🍫 *NEW ORDER - ${restaurantConfig.name}*
 
@@ -50,8 +54,7 @@ ${itemsText}
 ━━━━━━━━━━━━━━━━━━
 
 💰 *Subtotal:* ₹${subtotal}
-
-🚚 *Delivery Fee:* ₹${deliveryFee}
+${orderType === 'delivery' ? `📏 *Delivery Distance:* ${distanceText}\n` : ''}🚚 *Delivery Fee:* ₹${deliveryFee}${deliveryFee === 0 && orderType === 'delivery' ? ' (FREE)' : ''}
 
 💵 *Total Amount:* ₹${grandTotal}
 

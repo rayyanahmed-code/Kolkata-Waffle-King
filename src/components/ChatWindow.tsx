@@ -5,6 +5,7 @@ import { OrderState, StepId, ChatMessage, MenuItem, CustomerLocation } from '../
 import { restaurantConfig } from '../config/restaurantConfig';
 import { MENU_ITEMS, MENU_CATEGORIES } from '../data/menu';
 import { generateWhatsAppLink } from '../utils/whatsapp';
+import { calculateDistanceKm } from '../utils/delivery';
 import { MessageBubble } from './MessageBubble';
 import { OptionButton } from './OptionButton';
 import { LocationPicker } from './LocationPicker';
@@ -239,13 +240,23 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   // Location Selection
   const handleLocationSelected = (location: CustomerLocation) => {
     setOrder((prev) => ({ ...prev, location }));
-    const locText = location.type === 'geo' ? '📍 Shared Current Geolocation' : `🏠 ${location.address}`;
+    let distanceInfo = '';
+    if (location.latitude && location.longitude) {
+      const dist = calculateDistanceKm(
+        restaurantConfig.location.latitude,
+        restaurantConfig.location.longitude,
+        location.latitude,
+        location.longitude
+      );
+      distanceInfo = ` (${dist.toFixed(2)} km from Kolkata Waffle King)`;
+    }
+    const locText = location.type === 'geo' ? `📍 Shared Current Geolocation${distanceInfo}` : `🏠 ${location.address}`;
     addUserMessage(locText);
 
     setActiveStepId('menu');
     setCurrentStep(5);
     addAssistantMessage(
-      'Location saved! 🎯\n\nNow, browse our freshly baked menu below and choose your favorite waffles, milkshakes & toppings.',
+      `Location saved!${distanceInfo ? ` Delivery distance: ${distanceInfo.trim().replace(/^\(|\)$/g, '')}.` : ''} 🎯\n\nNow, browse our freshly baked menu below and choose your favorite waffles, milkshakes & toppings.`,
       600
     );
   };

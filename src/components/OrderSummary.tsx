@@ -3,6 +3,7 @@ import { motion } from 'motion/react';
 import { ShoppingBag, MapPin, Phone, User, MessageSquare, ArrowRight, ShieldCheck, Truck, Store } from 'lucide-react';
 import { OrderState } from '../types';
 import { restaurantConfig } from '../config/restaurantConfig';
+import { calculateDeliveryFee, getOrderDeliveryDistance } from '../utils/delivery';
 import { WhatsAppButton } from './WhatsAppButton';
 
 interface OrderSummaryProps {
@@ -21,7 +22,8 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
   const { customerName, customerPhone, orderType, location, cart, specialInstructions } = order;
 
   const subtotal = cart.reduce((sum, item) => sum + item.item.price * item.quantity, 0);
-  const deliveryFee = orderType === 'delivery' ? restaurantConfig.deliveryFee : 0;
+  const distanceKm = orderType === 'delivery' ? getOrderDeliveryDistance(location?.latitude, location?.longitude) : null;
+  const deliveryFee = orderType === 'delivery' ? calculateDeliveryFee(distanceKm, subtotal) : 0;
   const totalAmount = subtotal + deliveryFee;
 
   return (
@@ -128,8 +130,8 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
 
           {orderType === 'delivery' && (
             <div className="flex justify-between text-[#FAF6F0]/80">
-              <span>Delivery Charges</span>
-              <span>₹{deliveryFee}</span>
+              <span>Delivery Fee {distanceKm !== null ? `(${distanceKm.toFixed(2)} km)` : ''}</span>
+              <span>{deliveryFee === 0 ? <span className="text-emerald-400 font-bold">FREE</span> : `₹${deliveryFee}`}</span>
             </div>
           )}
 
