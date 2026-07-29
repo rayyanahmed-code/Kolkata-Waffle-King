@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
-import { ShoppingBag, MapPin, Phone, User, MessageSquare, ArrowRight, ShieldCheck, Truck, Store } from 'lucide-react';
+import { ShoppingBag, MapPin, Phone, User, MessageSquare, ArrowRight, ShieldCheck, Truck, Store, ExternalLink } from 'lucide-react';
 import { OrderState } from '../types';
 import { restaurantConfig } from '../config/restaurantConfig';
 import { calculateDeliveryFee, getOrderDeliveryDistance } from '../utils/delivery';
@@ -67,6 +67,31 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
               <span className="line-clamp-2">
                 {location.type === 'geo' ? (location.mapsUrl || 'Google Maps Location Shared') : location.address}
               </span>
+            </div>
+          )}
+
+          {orderType === 'pickup' && (
+            <div className="col-span-2 pt-1.5 border-t border-[#E6D7C3]/50 space-y-1.5 text-[11px] text-[#2C1810]">
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex items-start gap-1.5">
+                  <Store className="w-3.5 h-3.5 text-[#E5A93B] mt-0.5 flex-shrink-0" />
+                  <div>
+                    <span className="font-bold text-[#2C1810] block">Pickup Location:</span>
+                    <span className="text-[#2C1810]/80 leading-tight block">{restaurantConfig.address}</span>
+                  </div>
+                </div>
+                {restaurantConfig.googleMapsUrl && (
+                  <a
+                    href={restaurantConfig.googleMapsUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-shrink-0 inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-[#E5A93B] hover:bg-[#F3BF59] text-[#180E0A] font-bold text-[10px] shadow-sm transition-all active:scale-95"
+                  >
+                    <span>Open Maps</span>
+                    <ExternalLink className="w-2.5 h-2.5" />
+                  </a>
+                )}
+              </div>
             </div>
           )}
         </div>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Phone } from 'lucide-react';
+import { Phone, MapPin } from 'lucide-react';
 import { restaurantConfig } from '../config/restaurantConfig';
 import { LOGO_DATA_URI } from '../assets/logoData';
 
@@ -43,6 +43,19 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Right Action Bar */}
         <div className="flex items-center gap-2">
+          {/* Store Location Maps Button */}
+          {restaurantConfig.googleMapsUrl && (
+            <a
+              href={restaurantConfig.googleMapsUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-2 rounded-xl bg-[#3D2218] hover:bg-[#543123] text-[#FAF6F0]/90 transition-colors border border-[#543123] flex items-center justify-center"
+              title="Open Location on Google Maps"
+            >
+              <MapPin className="w-4 h-4 text-[#E5A93B]" />
+            </a>
+          )}
+
           {/* Quick Call Button */}
           <a
             href={`tel:${restaurantConfig.whatsappNumber}`}

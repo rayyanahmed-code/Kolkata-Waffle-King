@@ -4,7 +4,8 @@ export const restaurantConfig = {
   whatsappNumber: '7449785471', // Restaurant's receiving WhatsApp number
   whatsappCountryCode: '91',
   currencySymbol: '₹',
-  address: 'CIT Road, Beniapukur, Kolkata, West Bengal 700014',
+  address: 'CIT Rd, Beniapukur, Kolkata, West Bengal 700014',
+  googleMapsUrl: 'https://maps.app.goo.gl/Y75xAgNZLW75RRfs6',
   location: {
     latitude: 22.5482,
     longitude: 88.3678,

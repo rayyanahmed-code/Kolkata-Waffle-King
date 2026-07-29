@@ -16,7 +16,7 @@ export function formatWhatsAppMessage(order: OrderState): string {
   const deliveryFee = orderType === 'delivery' ? calculateDeliveryFee(distanceKm, subtotal) : 0;
   const grandTotal = subtotal + deliveryFee;
 
-  let locationText = 'N/A (Pickup Order)';
+  let locationText = `Store Pickup at ${restaurantConfig.address}\nGoogle Maps: ${restaurantConfig.googleMapsUrl}`;
   if (orderType === 'delivery' && location) {
     if (location.type === 'geo' && location.mapsUrl) {
       locationText = location.mapsUrl;

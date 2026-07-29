@@ -226,7 +226,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
       setActiveStepId('menu');
       setCurrentStep(4); // Menu is step 4 in pickup flow (4 total steps)
       addAssistantMessage(
-        `Great! Pickup order selected.\n\nNow, explore our delicious menu below and select your items 🧇`,
+        `Great! Pickup order selected. 🏃\n\n📍 Store Location for Pickup:\n${restaurantConfig.address}\n\nNow, explore our freshly baked menu below and choose your favorite waffles, milkshakes & toppings 🧇`,
         500
       );
     } else {
