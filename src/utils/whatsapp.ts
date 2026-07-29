@@ -12,22 +12,40 @@ export function formatWhatsAppMessage(order: OrderState): string {
 
   const subtotal = cart.reduce((acc, c) => acc + c.item.price * c.quantity, 0);
 
-  const distanceKm = orderType === 'delivery' ? getOrderDeliveryDistance(location?.latitude, location?.longitude) : null;
-  const deliveryFee = orderType === 'delivery' ? calculateDeliveryFee(distanceKm, subtotal) : 0;
+  const isDelivery = orderType === 'delivery';
+  const distanceKm = isDelivery ? getOrderDeliveryDistance(location?.latitude, location?.longitude) : null;
+  const deliveryFee = isDelivery ? calculateDeliveryFee(distanceKm, subtotal) : 0;
   const grandTotal = subtotal + deliveryFee;
 
-  let locationText = `Store Pickup at ${restaurantConfig.address}\nGoogle Maps: ${restaurantConfig.googleMapsUrl}`;
-  if (orderType === 'delivery' && location) {
-    if (location.type === 'geo' && location.mapsUrl) {
+  let locationHeader = '📍 *Delivery Location*';
+  let locationText = '';
+
+  if (isDelivery) {
+    locationHeader = '📍 *Delivery Location*';
+    if (location?.type === 'geo' && location?.mapsUrl) {
       locationText = location.mapsUrl;
-    } else if (location.address) {
+    } else if (location?.address) {
       locationText = location.address;
+    } else {
+      locationText = 'Address not provided';
     }
+  } else {
+    locationHeader = '🏪 *Pickup Store Location*';
+    locationText = `${restaurantConfig.address}\nGoogle Maps: ${restaurantConfig.googleMapsUrl}`;
   }
 
-  const orderTypeText = orderType === 'delivery' ? 'Delivery' : 'Pickup';
+  const orderTypeText = isDelivery ? '🚚 Delivery' : '🏪 Self Pickup';
   const instructionsText = specialInstructions && specialInstructions.trim() ? specialInstructions.trim() : 'None';
   const distanceText = distanceKm !== null ? `${distanceKm.toFixed(2)} km` : 'Manual Address';
+
+  const billingSection = isDelivery
+    ? `💰 *Subtotal:* ₹${subtotal}
+📏 *Delivery Distance:* ${distanceText}
+🚚 *Delivery Fee:* ₹${deliveryFee}${deliveryFee === 0 ? ' (FREE)' : ''}
+💵 *Total Amount:* ₹${grandTotal}`
+    : `💰 *Subtotal:* ₹${subtotal}
+🛍️ *Pickup:* Free
+💵 *Total Amount:* ₹${grandTotal}`;
 
   const message = `🍫 *NEW ORDER - ${restaurantConfig.name}*
 
@@ -39,10 +57,10 @@ ${customerName}
 📞 *Phone*
 ${customerPhone}
 
-🚚 *Order Type*
+📦 *Order Type*
 ${orderTypeText}
 
-📍 *Delivery Location*
+${locationHeader}
 ${locationText}
 
 ━━━━━━━━━━━━━━━━━━
@@ -53,10 +71,7 @@ ${itemsText}
 
 ━━━━━━━━━━━━━━━━━━
 
-💰 *Subtotal:* ₹${subtotal}
-${orderType === 'delivery' ? `📏 *Delivery Distance:* ${distanceText}\n` : ''}🚚 *Delivery Fee:* ₹${deliveryFee}${deliveryFee === 0 && orderType === 'delivery' ? ' (FREE)' : ''}
-
-💵 *Total Amount:* ₹${grandTotal}
+${billingSection}
 
 ━━━━━━━━━━━━━━━━━━
 
