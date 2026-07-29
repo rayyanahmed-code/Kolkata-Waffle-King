@@ -366,7 +366,7 @@ export const MENU_ITEMS: MenuItem[] = [
     category: 'brownies',
     subcategory: 'Brownies',
     price: 100,
-    description: 'Warm, fudgy chocolate brownie topped with a scoop of vanilla ice cream.',
+    description: 'Warm, fudgy chocolate brownie topped with a scoop of ice cream.',
     image: 'https://images.unsplash.com/photo-1564355808539-22fda35bed7e?auto=format&fit=crop&q=80&w=500',
     isPopular: true,
   },
