@@ -349,6 +349,28 @@ export const MENU_ITEMS: MenuItem[] = [
     image: 'https://images.unsplash.com/photo-1551024709-8f23befc6f87?auto=format&fit=crop&q=80&w=500',
   },
 
+  // 🍰 BROWNIES
+  {
+    id: 'br-01',
+    name: 'Sizzling Brownie',
+    category: 'brownies',
+    subcategory: 'Brownies',
+    price: 70,
+    description: 'Hot sizzling chocolate brownie served with rich chocolate sauce.',
+    image: 'https://images.unsplash.com/photo-1606313564200-e75d5e30476c?auto=format&fit=crop&q=80&w=500',
+    isPopular: true,
+  },
+  {
+    id: 'br-02',
+    name: 'Brownies with Ice Cream',
+    category: 'brownies',
+    subcategory: 'Brownies',
+    price: 100,
+    description: 'Warm, fudgy chocolate brownie topped with a scoop of vanilla ice cream.',
+    image: 'https://images.unsplash.com/photo-1564355808539-22fda35bed7e?auto=format&fit=crop&q=80&w=500',
+    isPopular: true,
+  },
+
   // 🥤 MOCKTAILS (₹49 Each)
   {
     id: 'mck-01',
@@ -633,6 +655,7 @@ export const MENU_CATEGORIES = [
   { id: 'sandwich_waffles', name: 'Sandwich Waffles', icon: '🧇', label: 'SANDWICH WAFFLES' },
   { id: 'double_chocolate', name: 'Double Chocolate', icon: '🍫', label: 'DOUBLE CHOCOLATE SERIES' },
   { id: 'stick_waffles', name: 'Stick Waffles', icon: '🧇', label: 'STICK WAFFLE SERIES' },
+  { id: 'brownies', name: 'Brownies', icon: '🍰', label: 'BROWNIES' },
   { id: 'mocktails', name: 'Mocktails', icon: '🥤', label: 'MOCKTAILS (₹49 Each)' },
   { id: 'milkshakes', name: 'Milkshakes', icon: '🥤', label: 'MILKSHAKES (₹99 Each)' },
   { id: 'coffee', name: 'Coffee', icon: '☕', label: 'COFFEE' },

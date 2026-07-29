@@ -1,5 +1,43 @@
 import { restaurantConfig } from '../config/restaurantConfig';
 
+export const BEVERAGE_CATEGORIES = ['mocktails', 'milkshakes', 'coffee', 'popping_boba'];
+
+/**
+ * Checks if a category corresponds to a beverage (which is exempt from parcel box charge).
+ */
+export function isBeverageCategory(category: string): boolean {
+  return BEVERAGE_CATEGORIES.includes(category);
+}
+
+/**
+ * Calculates parcel box charge for the order.
+ * Charges ₹5 per item unit for all items EXCEPT beverages.
+ */
+export function calculateParcelCharge(
+  cart: Array<{ item: { category: string }; quantity: number }>
+): number {
+  return cart.reduce((total, cartItem) => {
+    if (!isBeverageCategory(cartItem.item.category)) {
+      return total + 5 * cartItem.quantity;
+    }
+    return total;
+  }, 0);
+}
+
+/**
+ * Returns the total count of non-beverage items in cart.
+ */
+export function getNonBeverageItemCount(
+  cart: Array<{ item: { category: string }; quantity: number }>
+): number {
+  return cart.reduce((total, cartItem) => {
+    if (!isBeverageCategory(cartItem.item.category)) {
+      return total + cartItem.quantity;
+    }
+    return total;
+  }, 0);
+}
+
 /**
  * Calculates straight-line distance in kilometers between two GPS coordinates using Haversine formula.
  * Returns distance rounded to 2 decimal places.

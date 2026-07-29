@@ -3,7 +3,7 @@ import { motion } from 'motion/react';
 import { ShoppingBag, MapPin, Phone, User, MessageSquare, ArrowRight, ShieldCheck, Truck, Store, ExternalLink } from 'lucide-react';
 import { OrderState } from '../types';
 import { restaurantConfig } from '../config/restaurantConfig';
-import { calculateDeliveryFee, getOrderDeliveryDistance } from '../utils/delivery';
+import { calculateDeliveryFee, getOrderDeliveryDistance, calculateParcelCharge, getNonBeverageItemCount } from '../utils/delivery';
 import { WhatsAppButton } from './WhatsAppButton';
 
 interface OrderSummaryProps {
@@ -22,9 +22,11 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
   const { customerName, customerPhone, orderType, location, cart, specialInstructions } = order;
 
   const subtotal = cart.reduce((sum, item) => sum + item.item.price * item.quantity, 0);
+  const parcelCharge = calculateParcelCharge(cart);
+  const nonBeverageCount = getNonBeverageItemCount(cart);
   const distanceKm = orderType === 'delivery' ? getOrderDeliveryDistance(location?.latitude, location?.longitude) : null;
   const deliveryFee = orderType === 'delivery' ? calculateDeliveryFee(distanceKm, subtotal) : 0;
-  const totalAmount = subtotal + deliveryFee;
+  const totalAmount = subtotal + parcelCharge + deliveryFee;
 
   return (
     <div className="w-full space-y-4 my-2">
@@ -151,6 +153,16 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
           <div className="flex justify-between text-[#FAF6F0]/80">
             <span>Item Subtotal</span>
             <span>₹{subtotal}</span>
+          </div>
+
+          <div className="flex justify-between text-[#FAF6F0]/80">
+            <span className="flex items-center gap-1">
+              <span>Parcel Box</span>
+              {nonBeverageCount > 0 && (
+                <span className="text-[10px] text-[#FAF6F0]/60">({nonBeverageCount} × ₹5)</span>
+              )}
+            </span>
+            <span>₹{parcelCharge}</span>
           </div>
 
           {orderType === 'delivery' && (
