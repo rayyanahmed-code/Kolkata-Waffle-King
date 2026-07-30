@@ -43,11 +43,14 @@ async function startServer() {
     res.json({ keyId, configured: Boolean(process.env.RAZORPAY_KEY_ID) });
   });
 
-  // API Endpoint: Create Razorpay Order
-  app.post('/api/create-razorpay-order', async (req, res) => {
+  // API Endpoint: Create Razorpay Order (supports POST and GET fallbacks)
+  app.all('/api/create-razorpay-order', async (req, res) => {
     try {
-      const { amount, currency = 'INR', receipt = 'order_rcpt_' + Date.now() } = req.body;
-      if (!amount || typeof amount !== 'number' || amount <= 0) {
+      const amount = Number(req.body?.amount || req.query?.amount || 99);
+      const currency = req.body?.currency || req.query?.currency || 'INR';
+      const receipt = req.body?.receipt || req.query?.receipt || 'order_rcpt_' + Date.now();
+
+      if (!amount || isNaN(amount) || amount <= 0) {
         return res.status(400).json({ error: 'Valid amount in INR is required' });
       }
 
@@ -72,7 +75,7 @@ async function startServer() {
         });
       }
 
-      // Fallback test order mode when live keys are in progress or sandbox mode
+      // Fallback test order mode when live keys are in sandbox or pending
       const mockOrderId = `order_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
       return res.json({
         success: true,
