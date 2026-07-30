@@ -29,6 +29,19 @@ const SAMPLE_NAMES = [
   'Rohan Chakraborty',
 ];
 
+const STEP_LEVELS: Record<StepId, number> = {
+  welcome: 0,
+  name: 1,
+  phone: 2,
+  order_type: 3,
+  location: 4,
+  menu: 5,
+  summary: 6,
+  payment: 7,
+  payment_confirmation: 8,
+  completed: 9,
+};
+
 interface ChatWindowProps {
   order: OrderState;
   setOrder: React.Dispatch<React.SetStateAction<OrderState>>;
@@ -76,7 +89,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   };
 
   // Helper to add assistant message with typing delay
-  const addAssistantMessage = (text: string, delayMs = 600, skipScroll = false) => {
+  const addAssistantMessage = (text: string, delayMs = 600, skipScroll = false, stepId?: StepId) => {
     setIsTyping(true);
     if (!skipScroll) scrollToBottom();
 
@@ -89,6 +102,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
           sender: 'assistant',
           text,
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          stepId,
         },
       ]);
       if (!skipScroll) scrollToBottom();
@@ -96,7 +110,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   };
 
   // Helper to add user message immediately
-  const addUserMessage = (text: string) => {
+  const addUserMessage = (text: string, stepId?: StepId) => {
     setMessages((prev) => [
       ...prev,
       {
@@ -104,9 +118,22 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
         sender: 'user',
         text,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        stepId,
       },
     ]);
     scrollToBottom();
+  };
+
+  // Helper to prune messages when stepping back
+  const pruneMessagesToStep = (targetStepId: StepId) => {
+    const targetLevel = STEP_LEVELS[targetStepId];
+    setMessages((prev) =>
+      prev.filter((msg) => {
+        if (!msg.stepId) return true;
+        const msgLevel = STEP_LEVELS[msg.stepId] ?? 0;
+        return msgLevel <= targetLevel;
+      })
+    );
   };
 
   // Initial Welcome Message
@@ -117,7 +144,8 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
       addAssistantMessage(
         `${restaurantConfig.assistant.greetingTitle}\n\n${restaurantConfig.assistant.greetingSubtitle}\n\n${restaurantConfig.assistant.greetingMessage}`,
         300,
-        true
+        true,
+        'welcome'
       );
     }
   }, []);
@@ -138,6 +166,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
         sender: 'assistant',
         text: `${restaurantConfig.assistant.greetingTitle}\n\n${restaurantConfig.assistant.greetingSubtitle}\n\n${restaurantConfig.assistant.greetingMessage}`,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        stepId: 'welcome',
       },
     ]);
     onResetOrder();
@@ -168,6 +197,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
 
   // Step Navigation Back Handlers
   const handleBackToWelcome = () => {
+    pruneMessagesToStep('welcome');
     setActiveStepId('welcome');
     setCurrentStep(0);
   };
@@ -176,6 +206,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
     if (!nameInput && order.customerName) {
       setNameInput(order.customerName);
     }
+    pruneMessagesToStep('name');
     setActiveStepId('name');
     setCurrentStep(1);
   };
@@ -184,20 +215,24 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
     if (!phoneInput && order.customerPhone) {
       setPhoneInput(order.customerPhone);
     }
+    pruneMessagesToStep('phone');
     setActiveStepId('phone');
     setCurrentStep(2);
   };
 
   const handleBackToOrderType = () => {
+    pruneMessagesToStep('order_type');
     setActiveStepId('order_type');
     setCurrentStep(3);
   };
 
   const handleBackFromMenu = () => {
     if (order.orderType === 'delivery') {
+      pruneMessagesToStep('location');
       setActiveStepId('location');
       setCurrentStep(4);
     } else {
+      pruneMessagesToStep('order_type');
       setActiveStepId('order_type');
       setCurrentStep(3);
     }
@@ -205,10 +240,10 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
 
   // Start Order -> Move to Step 1 (Name)
   const handleStartOrder = () => {
-    addUserMessage(restaurantConfig.assistant.startOrderBtnText);
+    addUserMessage(restaurantConfig.assistant.startOrderBtnText, 'name');
     setActiveStepId('name');
     setCurrentStep(1);
-    addAssistantMessage("Awesome! Let's get started. May I have your full name, please?", 500);
+    addAssistantMessage("Awesome! Let's get started. May I have your full name, please?", 500, false, 'name');
   };
 
   // Name Submission
@@ -221,13 +256,15 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
     }
     setNameError('');
     setOrder((prev) => ({ ...prev, customerName: trimmed }));
-    addUserMessage(`My name is ${trimmed}`);
+    addUserMessage(`My name is ${trimmed}`, 'phone');
 
     setActiveStepId('phone');
     setCurrentStep(2);
     addAssistantMessage(
       `Nice to meet you, ${trimmed}! 👋\n\nWhat is your 10-digit WhatsApp phone number so we can confirm your order?`,
-      600
+      600,
+      false,
+      'phone'
     );
   };
 
@@ -246,33 +283,36 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
     // Format to 10 digits
     const formattedPhone = cleanPhone.length > 10 ? cleanPhone.slice(-10) : cleanPhone;
     setOrder((prev) => ({ ...prev, customerPhone: formattedPhone }));
-    addUserMessage(`📱 ${formattedPhone}`);
+    addUserMessage(`📱 ${formattedPhone}`, 'order_type');
 
     setActiveStepId('order_type');
     setCurrentStep(3);
-    addAssistantMessage('How would you like to receive your order today?', 500);
+    addAssistantMessage('How would you like to receive your order today?', 500, false, 'order_type');
   };
 
   // Order Type Selection (Delivery or Pickup)
   const handleOrderTypeSelect = (type: 'delivery' | 'pickup') => {
     setOrder((prev) => ({ ...prev, orderType: type }));
     const label = type === 'delivery' ? '🚚 Delivery' : '🏃 Pickup';
-    addUserMessage(label);
 
     if (type === 'pickup') {
+      addUserMessage(label, 'menu');
       // Skip location, jump straight to menu (Step 5)
       setOrder((prev) => ({ ...prev, location: null }));
       setActiveStepId('menu');
       setCurrentStep(4); // Menu is step 4 in pickup flow (4 total steps)
       addAssistantMessage(
         `Great! Pickup order selected. 🏃\n\n📍 Store Location for Pickup:\n${restaurantConfig.address}\n\nNow, explore our freshly baked menu below and choose your favorite waffles, milkshakes & toppings 🧇`,
-        500
+        500,
+        false,
+        'menu'
       );
     } else {
+      addUserMessage(label, 'location');
       // Continue to location (Step 4 in 5-step delivery flow)
       setActiveStepId('location');
       setCurrentStep(4);
-      addAssistantMessage('To deliver your order accurately, please share your delivery location.', 500);
+      addAssistantMessage('To deliver your order accurately, please share your delivery location.', 500, false, 'location');
     }
   };
 
@@ -290,13 +330,15 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
       distanceInfo = ` (${dist.toFixed(2)} km from Kolkata Waffle King)`;
     }
     const locText = location.type === 'geo' ? `📍 Shared Current Geolocation${distanceInfo}` : `🏠 ${location.address}`;
-    addUserMessage(locText);
+    addUserMessage(locText, 'menu');
 
     setActiveStepId('menu');
     setCurrentStep(5);
     addAssistantMessage(
       `Location saved!${distanceInfo ? ` Delivery distance: ${distanceInfo.trim().replace(/^\(|\)$/g, '')}.` : ''} 🎯\n\nNow, browse our freshly baked menu below and choose your favorite waffles, milkshakes & toppings.`,
-      600
+      600,
+      false,
+      'menu'
     );
   };
 
@@ -328,33 +370,39 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
 
     const itemCount = order.cart.reduce((a, b) => a + b.quantity, 0);
     const summaryText = `Added ${itemCount} item(s) to order. Proceeding to Summary.`;
-    addUserMessage(summaryText);
+    addUserMessage(summaryText, 'summary');
 
     setActiveStepId('summary');
     setCurrentStep(order.orderType === 'delivery' ? 6 : 5);
     addAssistantMessage(
       'Here is your order summary receipt. Please verify your details before placing the order via WhatsApp! 👇',
-      500
+      500,
+      false,
+      'summary'
     );
   };
 
   // Proceed from Summary to 50% Advance Payment Screen
   const handleProceedToPayment = () => {
-    addUserMessage("💳 Proceeding to 50% Advance Payment");
+    addUserMessage("💳 Proceeding to 50% Advance Payment", 'payment');
     setActiveStepId('payment');
     addAssistantMessage(
       "To avoid fake orders & food wastage, Kolkata Waffle King requires a 50% advance payment. Scan the QR code below to pay via UPI! 📱",
-      400
+      400,
+      false,
+      'payment'
     );
   };
 
   // Payment Completed Handler -> Move to Payment Confirmation Screen
   const handlePaymentCompleted = () => {
-    addUserMessage("✅ I Have Completed the Payment");
+    addUserMessage("✅ I Have Completed the Payment", 'payment_confirmation');
     setActiveStepId('payment_confirmation');
     addAssistantMessage(
       "Payment step completed! Please attach your payment screenshot in WhatsApp before sending your order. 📸",
-      400
+      400,
+      false,
+      'payment_confirmation'
     );
   };
 
@@ -697,6 +745,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
               onUpdateInstructions={(inst) => setOrder((prev) => ({ ...prev, specialInstructions: inst }))}
               onConfirmOrder={handleProceedToPayment}
               onEditItems={() => {
+                pruneMessagesToStep('menu');
                 setActiveStepId('menu');
                 setCurrentStep(order.orderType === 'delivery' ? 5 : 4);
               }}
@@ -713,7 +762,10 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
             <PaymentScreen
               order={order}
               onPaymentCompleted={handlePaymentCompleted}
-              onBackToSummary={() => setActiveStepId('summary')}
+              onBackToSummary={() => {
+                pruneMessagesToStep('summary');
+                setActiveStepId('summary');
+              }}
             />
           </motion.div>
         )}
@@ -727,7 +779,10 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
             <PaymentConfirmationScreen
               customerName={order.customerName}
               onContinueToWhatsApp={handleConfirmAndWhatsApp}
-              onBackToPayment={() => setActiveStepId('payment')}
+              onBackToPayment={() => {
+                pruneMessagesToStep('payment');
+                setActiveStepId('payment');
+              }}
             />
           </motion.div>
         )}

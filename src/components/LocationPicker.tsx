@@ -56,16 +56,60 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
     );
   };
 
-  const handleManualSubmit = (e: React.FormEvent) => {
+  const handleManualSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!manualAddress.trim()) {
+    const cleanAddress = manualAddress.trim();
+    if (!cleanAddress) {
       setErrorMsg('Please enter a valid street or building address.');
       return;
     }
 
+    setIsLoading(true);
+    setErrorMsg(null);
+
+    let coords: { latitude: number; longitude: number } | null = null;
+
+    // 1. Try Geocoding via OpenStreetMap Nominatim API
+    try {
+      const query = cleanAddress.toLowerCase().includes('kolkata')
+        ? cleanAddress
+        : `${cleanAddress}, Kolkata, West Bengal`;
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`,
+        { headers: { Accept: 'application/json' } }
+      );
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) {
+          const lat = parseFloat(data[0].lat);
+          const lon = parseFloat(data[0].lon);
+          if (!isNaN(lat) && !isNaN(lon)) {
+            coords = { latitude: lat, longitude: lon };
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('Geocoding search failed:', err);
+    }
+
+    // 2. Fallback to browser geolocation if geocoding returns no result
+    if (!coords && navigator.geolocation) {
+      coords = await new Promise<{ latitude: number; longitude: number } | null>((resolve) => {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => resolve({ latitude: pos.coords.latitude, longitude: pos.coords.longitude }),
+          () => resolve(null),
+          { timeout: 4000, enableHighAccuracy: false }
+        );
+      });
+    }
+
+    setIsLoading(false);
+
     onLocationSelected({
       type: 'manual',
-      address: manualAddress.trim(),
+      address: cleanAddress,
+      latitude: coords?.latitude,
+      longitude: coords?.longitude,
     });
   };
 
@@ -140,10 +184,20 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
             </button>
             <button
               type="submit"
-              className="flex-1 px-4 py-2 bg-[#E5A93B] hover:bg-[#F3BF59] text-[#180E0A] font-bold text-xs rounded-xl shadow-md transition-all flex items-center justify-center gap-1.5 active:scale-95"
+              disabled={isLoading}
+              className="flex-1 px-4 py-2 bg-[#E5A93B] hover:bg-[#F3BF59] text-[#180E0A] font-bold text-xs rounded-xl shadow-md transition-all flex items-center justify-center gap-1.5 active:scale-95 disabled:opacity-50"
             >
-              <CheckCircle className="w-3.5 h-3.5" />
-              <span>Confirm Location</span>
+              {isLoading ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  <span>Calculating Distance...</span>
+                </>
+              ) : (
+                <>
+                  <CheckCircle className="w-3.5 h-3.5" />
+                  <span>Confirm Location</span>
+                </>
+              )}
             </button>
           </div>
         </form>

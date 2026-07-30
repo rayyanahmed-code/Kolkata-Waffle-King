@@ -32,8 +32,40 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
   const upiId = restaurantConfig.upi?.upiId || '7003459674@kotakbank';
   const payeeName = restaurantConfig.upi?.payeeName || 'MD SAMIR IQBAL';
 
-  const upiUri = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(payeeName)}&am=${advanceAmount}&cu=INR&tn=${encodeURIComponent('Kolkata Waffle King Advance')}`;
-  const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(upiUri)}`;
+  // Standard clean parameters according to NPCI UPI specification
+  // Avoid literal %20 in payeeName so GPay doesn't render "MD%20SAMIR%20IQBAL"
+  const cleanPayeeName = payeeName;
+  const transactionNote = 'Advance';
+
+  // Universal standard UPI URI
+  const upiUri = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(cleanPayeeName)}&am=${advanceAmount}&cu=INR&tn=${encodeURIComponent(transactionNote)}`;
+  
+  // Clean QR Code URL using unencoded spaces for payee name for maximum scanner compatibility
+  const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(
+    `upi://pay?pa=${upiId}&pn=${cleanPayeeName}&am=${advanceAmount}&cu=INR&tn=${transactionNote}`
+  )}`;
+
+  // Android Package Specific Intent URLs for direct app launching
+  const getAppLink = (appName: string) => {
+    const params = `pa=${upiId}&pn=${encodeURIComponent(cleanPayeeName)}&am=${advanceAmount}&cu=INR&tn=${encodeURIComponent(transactionNote)}`;
+    
+    // Use Android Intent URI scheme for exact app targeting, falling back to standard upi://
+    if (navigator.userAgent.toLowerCase().includes('android')) {
+      switch (appName) {
+        case 'gpay':
+          return `intent://pay?${params}#Intent;scheme=upi;package=com.google.android.apps.nbu.paisa.user;end`;
+        case 'phonepe':
+          return `intent://pay?${params}#Intent;scheme=upi;package=com.phonepe.app;end`;
+        case 'paytm':
+          return `intent://pay?${params}#Intent;scheme=upi;package=net.one97.paytm;end`;
+        case 'bhim':
+          return `intent://pay?${params}#Intent;scheme=upi;package=in.org.npci.upiapp;end`;
+        default:
+          return upiUri;
+      }
+    }
+    return upiUri;
+  };
 
   const handleCopyUpi = () => {
     navigator.clipboard.writeText(upiId);
@@ -154,20 +186,20 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
           </p>
           <div className="flex flex-wrap items-center justify-center gap-2 text-xs font-semibold">
             {[
-              { name: 'Google Pay (GPay)', color: 'border-blue-400 bg-blue-50/50 text-blue-900 hover:bg-blue-100', link: `tez://upi/pay?${upiUri.split('?')[1]}` },
-              { name: 'PhonePe', color: 'border-purple-400 bg-purple-50/50 text-purple-900 hover:bg-purple-100', link: `phonepe://pay?${upiUri.split('?')[1]}` },
-              { name: 'Paytm', color: 'border-sky-400 bg-sky-50/50 text-sky-900 hover:bg-sky-100', link: `paytmmp://pay?${upiUri.split('?')[1]}` },
-              { name: 'BHIM', color: 'border-orange-400 bg-orange-50/50 text-orange-900 hover:bg-orange-100', link: `bhim://pay?${upiUri.split('?')[1]}` },
-              { name: 'Any UPI App', color: 'border-emerald-400 bg-emerald-50/50 text-emerald-900 hover:bg-emerald-100', link: upiUri },
-            ].map((app, idx) => (
+              { id: 'gpay', name: 'Google Pay (GPay)', color: 'border-blue-400 bg-blue-50/50 text-blue-900 hover:bg-blue-100', link: getAppLink('gpay') },
+              { id: 'phonepe', name: 'PhonePe', color: 'border-purple-400 bg-purple-50/50 text-purple-900 hover:bg-purple-100', link: getAppLink('phonepe') },
+              { id: 'paytm', name: 'Paytm', color: 'border-sky-400 bg-sky-50/50 text-sky-900 hover:bg-sky-100', link: getAppLink('paytm') },
+              { id: 'bhim', name: 'BHIM', color: 'border-orange-400 bg-orange-50/50 text-orange-900 hover:bg-orange-100', link: getAppLink('bhim') },
+              { id: 'any', name: 'Any UPI App', color: 'border-emerald-400 bg-emerald-50/50 text-emerald-900 hover:bg-emerald-100', link: upiUri },
+            ].map((app) => (
               <a
-                key={idx}
+                key={app.id}
                 href={app.link}
-                onClick={(e) => {
-                  // Fallback to standard generic upi:// if deep link fails or on desktop
+                onClick={() => {
+                  // Fallback to standard generic upi:// if intent doesn't launch app within 600ms
                   setTimeout(() => {
                     window.location.href = upiUri;
-                  }, 500);
+                  }, 600);
                 }}
                 className={`flex items-center gap-1 px-3 py-1.5 rounded-xl border ${app.color} shadow-xs transition-all active:scale-95 cursor-pointer font-bold text-[11px]`}
               >
@@ -175,9 +207,23 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
               </a>
             ))}
           </div>
-          <p className="text-[10px] text-[#2C1810]/60 italic">
-            Tapping any button will automatically open your UPI app with ₹{advanceAmount} pre-filled.
-          </p>
+          
+          <div className="bg-amber-50 border border-amber-200 p-2.5 rounded-xl text-[11px] text-amber-900 space-y-1 text-left">
+            <div className="font-bold flex items-center justify-between">
+              <span>💡 Bank redirect error or limit issue?</span>
+              <button
+                type="button"
+                onClick={handleCopyUpi}
+                className="bg-[#2C1810] text-[#E5A93B] px-2 py-0.5 rounded-md font-mono text-[10px] flex items-center gap-1 active:scale-95"
+              >
+                {copied ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                <span>{copied ? 'Copied!' : 'Copy UPI ID'}</span>
+              </button>
+            </div>
+            <p className="text-[10px] leading-tight text-amber-800">
+              If your bank displays "This request type is not supported" or a bank limit error, simply copy <strong className="font-mono">{upiId}</strong>, open your GPay or BHIM app, and send ₹{advanceAmount} directly.
+            </p>
+          </div>
         </div>
       </div>
 
