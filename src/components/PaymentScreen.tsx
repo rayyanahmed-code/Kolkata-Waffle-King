@@ -37,7 +37,7 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
   const cleanPayeeName = payeeName;
   const transactionNote = 'Advance';
 
-  // Universal standard UPI URI
+  // Universal standard UPI URI - clean NPCI parameters
   const upiUri = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(cleanPayeeName)}&am=${advanceAmount}&cu=INR&tn=${encodeURIComponent(transactionNote)}`;
   
   // Clean QR Code URL using unencoded spaces for payee name for maximum scanner compatibility
@@ -49,17 +49,17 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
   const getAppLink = (appName: string) => {
     const params = `pa=${upiId}&pn=${encodeURIComponent(cleanPayeeName)}&am=${advanceAmount}&cu=INR&tn=${encodeURIComponent(transactionNote)}`;
     
-    // Use Android Intent URI scheme for exact app targeting, falling back to standard upi://
+    // Standard upi:// protocol is natively supported by BHIM, GPay, PhonePe, Paytm on Android & iOS
     if (navigator.userAgent.toLowerCase().includes('android')) {
       switch (appName) {
         case 'gpay':
           return `intent://pay?${params}#Intent;scheme=upi;package=com.google.android.apps.nbu.paisa.user;end`;
+        case 'bhim':
+          return `intent://pay?${params}#Intent;scheme=upi;package=in.org.npci.upiapp;end`;
         case 'phonepe':
           return `intent://pay?${params}#Intent;scheme=upi;package=com.phonepe.app;end`;
         case 'paytm':
           return `intent://pay?${params}#Intent;scheme=upi;package=net.one97.paytm;end`;
-        case 'bhim':
-          return `intent://pay?${params}#Intent;scheme=upi;package=in.org.npci.upiapp;end`;
         default:
           return upiUri;
       }
@@ -71,6 +71,16 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
     navigator.clipboard.writeText(upiId);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleAppPay = (appName: string, link: string) => {
+    // 1. Auto-copy UPI ID so user can paste immediately if bank blocks web intent
+    navigator.clipboard.writeText(upiId);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2500);
+
+    // 2. Open UPI app via intent / scheme
+    window.location.href = link;
   };
 
   return (
@@ -195,11 +205,9 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
               <a
                 key={app.id}
                 href={app.link}
-                onClick={() => {
-                  // Fallback to standard generic upi:// if intent doesn't launch app within 600ms
-                  setTimeout(() => {
-                    window.location.href = upiUri;
-                  }, 600);
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleAppPay(app.name, app.link);
                 }}
                 className={`flex items-center gap-1 px-3 py-1.5 rounded-xl border ${app.color} shadow-xs transition-all active:scale-95 cursor-pointer font-bold text-[11px]`}
               >
