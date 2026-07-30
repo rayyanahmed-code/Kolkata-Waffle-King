@@ -390,11 +390,20 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   };
 
   // Payment Completed Handler -> Move to Payment Confirmation Screen
-  const handlePaymentCompleted = () => {
-    addUserMessage("✅ I Have Paid & Taken Screenshot", 'payment_confirmation');
+  const handlePaymentCompleted = (paymentData?: { verified: boolean; paymentId: string; timestamp: string; amountPaid: number }) => {
+    if (paymentData) {
+      setOrder((prev) => ({
+        ...prev,
+        paymentVerified: paymentData.verified,
+        razorpayPaymentId: paymentData.paymentId,
+        paymentTimestamp: paymentData.timestamp,
+        paymentAmountPaid: paymentData.amountPaid,
+      }));
+    }
+    addUserMessage("✅ Razorpay Payment Verified", 'payment_confirmation');
     setActiveStepId('payment_confirmation');
     addAssistantMessage(
-      "Awesome! Your order summary is ready. Please launch WhatsApp below and remember to attach your payment screenshot in the WhatsApp chat! 📸",
+      "Awesome! Your Razorpay payment is verified. Your order summary is ready. Please launch WhatsApp below to complete your order! 📸",
       400,
       false,
       'payment_confirmation'

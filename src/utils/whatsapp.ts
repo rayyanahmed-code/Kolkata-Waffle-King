@@ -55,16 +55,17 @@ export function formatWhatsAppMessage(order: OrderState): string {
 🛍️ *Pickup:* Free
 💵 *Total Amount:* ₹${grandTotal}`;
 
-  const paymentDetailsSection = `💳 *Payment Details*
-
-Payment Method:
-UPI QR Payment
-
-Advance Paid (50%):
-₹${advancePaid}
-
-Remaining Amount (Pay at Delivery/Pickup):
-₹${remainingAmount}`;
+  const paymentDetailsSection = order.paymentVerified
+    ? `💳 *PAYMENT STATUS (VERIFIED RAZORPAY)*
+✅ Status: PAID & VERIFIED (Anti-Scam Verified)
+🆔 Razorpay Payment ID: ${order.razorpayPaymentId || 'pay_verified'}
+🕒 Verification Time: ${order.paymentTimestamp || 'Just now'}
+💵 Advance Paid via Razorpay: ₹${order.paymentAmountPaid || advancePaid}
+🏷️ Remaining Balance (Pay on Delivery/Pickup): ₹${remainingAmount}`
+    : `💳 *PAYMENT STATUS*
+⚠️ Payment Method: Razorpay / UPI
+Advance 50% Required: ₹${advancePaid}
+Remaining Balance: ₹${remainingAmount}`;
 
   const message = `🍫 *NEW ORDER - ${restaurantConfig.name}*
 
@@ -104,9 +105,8 @@ ${instructionsText}
 
 ━━━━━━━━━━━━━━━━━━
 
-📸 *IMPORTANT REMINDER*
-Please attach your UPI payment screenshot to this WhatsApp message before pressing Send!
-Orders are verified once payment proof is received.`;
+🛡️ *VERIFIED ORDER PROOF*
+Payment verified via Razorpay Gateway. Please attach your payment screenshot or receipt to this message for Sameer's records before hitting Send!`;
 
   return message;
 }

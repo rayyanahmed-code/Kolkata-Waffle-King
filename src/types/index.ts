@@ -46,6 +46,11 @@ export interface OrderState {
   location: CustomerLocation | null;
   cart: CartItem[];
   specialInstructions: string;
+  paymentVerified?: boolean;
+  razorpayPaymentId?: string;
+  razorpayOrderId?: string;
+  paymentTimestamp?: string;
+  paymentAmountPaid?: number;
 }
 
 export interface ChatMessage {

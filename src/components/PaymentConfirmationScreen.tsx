@@ -47,6 +47,25 @@ export const PaymentConfirmationScreen: React.FC<PaymentConfirmationScreenProps>
         </p>
       </div>
 
+      {/* Verified Razorpay Payment Badge */}
+      {order.paymentVerified && (
+        <div className="bg-[#2C1810] text-[#FAF6F0] p-4.5 rounded-2xl border border-emerald-500/60 text-left space-y-2.5 shadow-lg">
+          <div className="flex items-center justify-between border-b border-[#3D2218] pb-2">
+            <div className="flex items-center gap-2 text-xs font-bold text-emerald-400">
+              <CheckCircle2 className="w-4 h-4 text-emerald-400 fill-current" />
+              <span>Verified Razorpay Receipt</span>
+            </div>
+            <span className="text-[10px] font-bold text-emerald-300 bg-emerald-950 px-2.5 py-0.5 rounded-full border border-emerald-700">
+              Anti-Scam Verified
+            </span>
+          </div>
+          <div className="font-mono text-xs text-[#FAF6F0] bg-[#180E0A] p-2.5 rounded-xl border border-[#3D2218] flex items-center justify-between">
+            <span className="text-[10px] text-[#FAF6F0]/70">Payment ID:</span>
+            <span className="font-bold text-emerald-300">{order.razorpayPaymentId}</span>
+          </div>
+        </div>
+      )}
+
       {/* Screenshot Instructions & Reminders Box */}
       <div className="bg-[#2C1810] text-[#FAF6F0] p-4.5 rounded-2xl border border-[#543123] text-left space-y-3 shadow-lg">
         <div className="flex items-center gap-2 text-xs font-bold text-[#E5A93B]">
