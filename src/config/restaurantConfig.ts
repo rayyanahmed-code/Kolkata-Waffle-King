@@ -4,11 +4,11 @@ export const restaurantConfig = {
   whatsappNumber: '7449785471', // Restaurant's receiving WhatsApp number
   whatsappCountryCode: '91',
   currencySymbol: '₹',
-  address: 'CIT Rd, Beniapukur, Kolkata, West Bengal 700014',
+  address: '98 Dr Sundari Mohan Avenue near Baba Tea, opposite Linton Post Office, Kolkata, West Bengal 700014',
   googleMapsUrl: 'https://maps.app.goo.gl/Y75xAgNZLW75RRfs6',
   location: {
-    latitude: 22.5482,
-    longitude: 88.3678,
+    latitude: 22.5463,
+    longitude: 88.3688,
   },
   upi: {
     upiId: '7003459674@kotakbank',

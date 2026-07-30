@@ -69,36 +69,60 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
 
     let coords: { latitude: number; longitude: number } | null = null;
 
-    // 1. Try Geocoding via OpenStreetMap Nominatim API
-    try {
-      const query = cleanAddress.toLowerCase().includes('kolkata')
-        ? cleanAddress
-        : `${cleanAddress}, Kolkata, West Bengal`;
-      const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`,
-        { headers: { Accept: 'application/json' } }
-      );
-      if (res.ok) {
-        const data = await res.json();
-        if (Array.isArray(data) && data.length > 0) {
-          const lat = parseFloat(data[0].lat);
-          const lon = parseFloat(data[0].lon);
-          if (!isNaN(lat) && !isNaN(lon)) {
-            coords = { latitude: lat, longitude: lon };
+    const geocodeQuery = async (searchStr: string): Promise<{ latitude: number; longitude: number } | null> => {
+      try {
+        const fullQuery = searchStr.toLowerCase().includes('kolkata')
+          ? searchStr
+          : `${searchStr}, Kolkata, West Bengal`;
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(fullQuery)}&limit=1&countrycodes=in`,
+          { headers: { Accept: 'application/json' } }
+        );
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data) && data.length > 0) {
+            const lat = parseFloat(data[0].lat);
+            const lon = parseFloat(data[0].lon);
+            if (!isNaN(lat) && !isNaN(lon)) {
+              return { latitude: lat, longitude: lon };
+            }
           }
         }
+      } catch (err) {
+        console.warn('Geocoding query failed:', err);
       }
-    } catch (err) {
-      console.warn('Geocoding search failed:', err);
+      return null;
+    };
+
+    // 1. Primary search: Exact clean address
+    coords = await geocodeQuery(cleanAddress);
+
+    // 2. Secondary search: Strip landmark prefixes (near, opp, flat, room, etc.)
+    if (!coords) {
+      const sanitized = cleanAddress
+        .replace(/(near|opp|opposite|flat|room|h\.no|house no|above|behind)\s+[^,]+/gi, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+      if (sanitized && sanitized !== cleanAddress) {
+        coords = await geocodeQuery(sanitized);
+      }
     }
 
-    // 2. Fallback to browser geolocation if geocoding returns no result
+    // 3. Tertiary search: Extract postal code or main area if present
+    if (!coords) {
+      const pinMatch = cleanAddress.match(/\b700\d{3}\b/);
+      if (pinMatch) {
+        coords = await geocodeQuery(`Kolkata ${pinMatch[0]}`);
+      }
+    }
+
+    // 4. Fallback to browser geolocation if geocoding returns no result
     if (!coords && navigator.geolocation) {
       coords = await new Promise<{ latitude: number; longitude: number } | null>((resolve) => {
         navigator.geolocation.getCurrentPosition(
           (pos) => resolve({ latitude: pos.coords.latitude, longitude: pos.coords.longitude }),
           () => resolve(null),
-          { timeout: 4000, enableHighAccuracy: false }
+          { timeout: 3000, enableHighAccuracy: false }
         );
       });
     }
