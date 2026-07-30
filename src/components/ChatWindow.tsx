@@ -4,7 +4,7 @@ import { User, Phone, CheckCircle, ArrowRight, ArrowLeft, ShoppingBag, Sparkles,
 import { OrderState, StepId, ChatMessage, MenuItem, CustomerLocation } from '../types';
 import { restaurantConfig } from '../config/restaurantConfig';
 import { MENU_ITEMS, MENU_CATEGORIES } from '../data/menu';
-import { generateWhatsAppLink } from '../utils/whatsapp';
+import { generateWhatsAppLink, shareOrSendWhatsAppOrder } from '../utils/whatsapp';
 import { calculateDistanceKm, getOrderDeliveryDistance } from '../utils/delivery';
 import { MessageBubble } from './MessageBubble';
 import { OptionButton } from './OptionButton';
@@ -389,25 +389,29 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
     );
   };
 
+  const handleUpdateScreenshot = (dataUrl: string | undefined, file: File | undefined) => {
+    setOrder((prev) => ({
+      ...prev,
+      paymentScreenshot: dataUrl,
+      paymentScreenshotFile: file,
+    }));
+  };
+
   // Payment Completed Handler -> Move to Payment Confirmation Screen
   const handlePaymentCompleted = () => {
     addUserMessage("✅ I Have Completed the Payment", 'payment_confirmation');
     setActiveStepId('payment_confirmation');
     addAssistantMessage(
-      "Payment step completed! Please attach your payment screenshot in WhatsApp before sending your order. 📸",
+      "Payment step completed! Your selected payment screenshot is ready to be sent along with your order details on WhatsApp. 📸",
       400,
       false,
       'payment_confirmation'
     );
   };
 
-  // Confirm Order & Redirect to WhatsApp
-  const handleConfirmAndWhatsApp = () => {
-    const waUrl = generateWhatsAppLink(order);
-    
-    // Open WhatsApp URL in new tab or direct window location
-    window.open(waUrl, '_blank');
-
+  // Confirm Order & Redirect / Share to WhatsApp
+  const handleConfirmAndWhatsApp = async () => {
+    await shareOrSendWhatsAppOrder(order);
     setActiveStepId('completed');
   };
 
@@ -761,6 +765,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                 pruneMessagesToStep('summary');
                 setActiveStepId('summary');
               }}
+              onUpdateScreenshot={handleUpdateScreenshot}
             />
           </motion.div>
         )}
@@ -772,12 +777,13 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
             animate={{ opacity: 1, y: 0 }}
           >
             <PaymentConfirmationScreen
-              customerName={order.customerName}
+              order={order}
               onContinueToWhatsApp={handleConfirmAndWhatsApp}
               onBackToPayment={() => {
                 pruneMessagesToStep('payment');
                 setActiveStepId('payment');
               }}
+              onUpdateScreenshot={handleUpdateScreenshot}
             />
           </motion.div>
         )}
