@@ -44,7 +44,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         orderId: order.id,
         amount: order.amount,
         currency: order.currency,
-        keyId: key_id
+        keyId: key_id,
+        isRealOrder: true
       });
     }
 
@@ -55,8 +56,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       orderId: mockOrderId,
       amount: Math.round(amount * 100),
       currency: 'INR',
-      keyId: process.env.RAZORPAY_KEY_ID || 'rzp_test_sameer_chocolates',
-      isTestMode: true
+      keyId: key_id || '',
+      isTestMode: true,
+      isRealOrder: false
     });
   } catch (err: any) {
     console.error('Error creating Razorpay order:', err);

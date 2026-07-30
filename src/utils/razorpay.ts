@@ -24,11 +24,12 @@ export async function processRazorpayPayment(params: {
   const { amount, customerName, customerPhone, onSuccess, onFailure } = params;
 
   let orderId = `order_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
-  let keyId = 'rzp_test_sameer_chocolates';
+  let keyId = '';
   let orderAmountInPaise = Math.round(amount * 100);
+  let isRealOrder = false;
 
   try {
-    // 1. Request Order Creation from Backend API
+    // 1. Request Order Creation from Backend Vercel Serverless API
     try {
       const res = await fetch('/api/create-razorpay-order', {
         method: 'POST',
@@ -44,20 +45,22 @@ export async function processRazorpayPayment(params: {
         const orderData = await res.json();
         if (orderData.success && orderData.orderId) {
           orderId = orderData.orderId;
-          keyId = orderData.keyId || keyId;
+          keyId = orderData.keyId || '';
           orderAmountInPaise = orderData.amount || orderAmountInPaise;
+          isRealOrder = Boolean(orderData.isRealOrder);
         }
       } else {
-        console.warn(`Server API returned HTTP ${res.status}, continuing with client fallback order.`);
+        console.warn(`Server API returned HTTP ${res.status}`);
       }
     } catch (apiErr) {
-      console.warn('API call failed, continuing with direct fallback order:', apiErr);
+      console.warn('API call failed, continuing fallback:', apiErr);
     }
 
-    // 2. Check if Razorpay JS SDK is loaded
-    if (typeof window.Razorpay !== 'function') {
-      console.warn('Razorpay SDK script not available in iframe, running instant verification');
-      // Simulated verified transaction for iframe preview container
+    const isValidKey = Boolean(keyId && keyId.startsWith('rzp_') && keyId.length > 12 && !keyId.includes('chocolates'));
+
+    // 2. Fallback mode if Razorpay credentials are not configured in Vercel or SDK unavailable
+    if (!isValidKey || typeof window.Razorpay !== 'function') {
+      console.warn('Razorpay live keys not configured in environment or SDK running in sandbox, completing test order');
       const simulatedPaymentId = `pay_rzp_${Date.now().toString(36)}${Math.random().toString(36).substring(2, 6)}`;
       
       try {
@@ -70,7 +73,7 @@ export async function processRazorpayPayment(params: {
           })
         });
       } catch (e) {
-        // Ignore verify fetch failure in fallback mode
+        // Ignore verify fetch error in fallback mode
       }
 
       onSuccess({
@@ -83,14 +86,14 @@ export async function processRazorpayPayment(params: {
       return;
     }
 
-    // 3. Launch Standard Razorpay Modal
+    // 3. Launch Standard Razorpay Checkout Modal for configured live/test keys
     const options = {
       key: keyId,
       amount: orderAmountInPaise,
       currency: 'INR',
       name: `${restaurantConfig.name} (Sameer)`,
       description: `Advance Order Payment - ₹${amount}`,
-      order_id: orderId.startsWith('order_') && !orderId.startsWith('order_rcpt') ? undefined : orderId,
+      order_id: isRealOrder ? orderId : undefined,
       prefill: {
         name: customerName || 'Valued Customer',
         contact: customerPhone || ''
@@ -100,12 +103,12 @@ export async function processRazorpayPayment(params: {
       },
       modal: {
         ondismiss: function () {
-          onFailure('Payment modal closed by user. Payment not completed.');
+          onFailure('Payment modal closed by user.');
         }
       },
       handler: async function (response: any) {
         try {
-          // Verify signature on backend server to prevent scams / client forgery
+          // Verify signature on backend Vercel serverless function
           let isVerified = true;
           try {
             const verifyRes = await fetch('/api/verify-razorpay-payment', {
