@@ -12,6 +12,8 @@ import { LocationPicker } from './LocationPicker';
 import { CategorySelector } from './CategorySelector';
 import { MenuCard } from './MenuCard';
 import { OrderSummary } from './OrderSummary';
+import { PaymentScreen } from './PaymentScreen';
+import { PaymentConfirmationScreen } from './PaymentConfirmationScreen';
 import { CompletionModal } from './CompletionModal';
 import { LOGO_DATA_URI } from '../assets/logoData';
 
@@ -296,6 +298,26 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
     addAssistantMessage(
       'Here is your order summary receipt. Please verify your details before placing the order via WhatsApp! 👇',
       500
+    );
+  };
+
+  // Proceed from Summary to 50% Advance Payment Screen
+  const handleProceedToPayment = () => {
+    addUserMessage("💳 Proceeding to 50% Advance Payment");
+    setActiveStepId('payment');
+    addAssistantMessage(
+      "To avoid fake orders & food wastage, Kolkata Waffle King requires a 50% advance payment. Scan the QR code below to pay via UPI! 📱",
+      400
+    );
+  };
+
+  // Payment Completed Handler -> Move to Payment Confirmation Screen
+  const handlePaymentCompleted = () => {
+    addUserMessage("✅ I Have Completed the Payment");
+    setActiveStepId('payment_confirmation');
+    addAssistantMessage(
+      "Payment step completed! Please attach your payment screenshot in WhatsApp before sending your order. 📸",
+      400
     );
   };
 
@@ -593,7 +615,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
             <OrderSummary
               order={order}
               onUpdateInstructions={(inst) => setOrder((prev) => ({ ...prev, specialInstructions: inst }))}
-              onConfirmOrder={handleConfirmAndWhatsApp}
+              onConfirmOrder={handleProceedToPayment}
               onEditItems={() => {
                 setActiveStepId('menu');
                 setCurrentStep(order.orderType === 'delivery' ? 5 : 4);
@@ -602,7 +624,35 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
           </motion.div>
         )}
 
-        {/* STEP 7: Completed Screen */}
+        {/* STEP 7: 50% Advance Payment Screen */}
+        {activeStepId === 'payment' && !isTyping && (
+          <motion.div
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <PaymentScreen
+              order={order}
+              onPaymentCompleted={handlePaymentCompleted}
+              onBackToSummary={() => setActiveStepId('summary')}
+            />
+          </motion.div>
+        )}
+
+        {/* STEP 8: Payment Confirmation & Screenshot Reminder Screen */}
+        {activeStepId === 'payment_confirmation' && !isTyping && (
+          <motion.div
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <PaymentConfirmationScreen
+              customerName={order.customerName}
+              onContinueToWhatsApp={handleConfirmAndWhatsApp}
+              onBackToPayment={() => setActiveStepId('payment')}
+            />
+          </motion.div>
+        )}
+
+        {/* STEP 9: Completed Screen */}
         {activeStepId === 'completed' && (
           <CompletionModal
             customerName={order.customerName}

@@ -18,6 +18,9 @@ export function formatWhatsAppMessage(order: OrderState): string {
   const deliveryFee = isDelivery ? calculateDeliveryFee(distanceKm, subtotal) : 0;
   const grandTotal = subtotal + parcelFee + deliveryFee;
 
+  const advancePaid = Math.ceil(grandTotal * 0.5);
+  const remainingAmount = grandTotal - advancePaid;
+
   let locationHeader = '📍 *Delivery Location*';
   let locationText = '';
 
@@ -26,7 +29,9 @@ export function formatWhatsAppMessage(order: OrderState): string {
     if (location?.type === 'geo' && location?.mapsUrl) {
       locationText = location.mapsUrl;
     } else if (location?.address) {
-      locationText = location.address;
+      const cleanAddr = location.address.trim();
+      const gmapsSearchUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(cleanAddr)}`;
+      locationText = `Manual Address:\n${cleanAddr}\n\nGoogle Maps:\n${gmapsSearchUrl}`;
     } else {
       locationText = 'Address not provided';
     }
@@ -49,6 +54,17 @@ export function formatWhatsAppMessage(order: OrderState): string {
 📦 *Parcel Box:* ₹${parcelFee}
 🛍️ *Pickup:* Free
 💵 *Total Amount:* ₹${grandTotal}`;
+
+  const paymentDetailsSection = `💳 *Payment Details*
+
+Payment Method:
+UPI QR Payment
+
+Advance Paid:
+₹${advancePaid}
+
+Remaining Amount:
+₹${remainingAmount}`;
 
   const message = `🍫 *NEW ORDER - ${restaurantConfig.name}*
 
@@ -78,9 +94,21 @@ ${billingSection}
 
 ━━━━━━━━━━━━━━━━━━
 
+${paymentDetailsSection}
+
+━━━━━━━━━━━━━━━━━━
+
 📝 *Special Instructions*
 
-${instructionsText}`;
+${instructionsText}
+
+━━━━━━━━━━━━━━━━━━
+
+📸 *IMPORTANT*
+
+Please attach your payment screenshot after this message before pressing Send.
+
+Orders without payment proof may not be confirmed.`;
 
   return message;
 }

@@ -8,6 +8,8 @@ export type StepId =
   | 'location'
   | 'menu'
   | 'summary'
+  | 'payment'
+  | 'payment_confirmation'
   | 'completed';
 
 export interface MenuItem {

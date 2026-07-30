@@ -1,7 +1,7 @@
 export const restaurantConfig = {
   name: 'Kolkata Waffle King',
   tagline: 'Freshly Baked Happiness in Every Bite',
-  whatsappNumber: '7003459674', // Restaurant's receiving WhatsApp number
+  whatsappNumber: '7449785471', // Restaurant's receiving WhatsApp number
   whatsappCountryCode: '91',
   currencySymbol: '₹',
   address: 'CIT Rd, Beniapukur, Kolkata, West Bengal 700014',
@@ -9,6 +9,11 @@ export const restaurantConfig = {
   location: {
     latitude: 22.5482,
     longitude: 88.3678,
+  },
+  upi: {
+    upiId: '7003459674@kotakbank',
+    payeeName: 'MD SAMIR IQBAL',
+    bankName: 'Kotak Bank',
   },
   openingHours: '11:00 AM - 11:30 PM (Daily)',
   estimatedTime: '20-30 mins',

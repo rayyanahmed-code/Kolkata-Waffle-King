@@ -172,21 +172,36 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
             </div>
           )}
 
-          <div className="pt-2 border-t border-[#3D2218] flex justify-between items-center text-sm font-bold text-[#E5A93B]">
-            <span>Grand Total</span>
-            <span className="text-base font-extrabold">₹{totalAmount}</span>
+          <div className="pt-2 border-t border-[#3D2218] space-y-1">
+            <div className="flex justify-between items-center text-sm font-bold text-[#FAF6F0]">
+              <span>Grand Total</span>
+              <span className="text-base font-extrabold text-[#FAF6F0]">₹{totalAmount}</span>
+            </div>
+            <div className="flex justify-between items-center text-xs font-bold text-[#E5A93B] pt-1 border-t border-[#3D2218]/80">
+              <span className="flex items-center gap-1">
+                <span>Pay 50% Advance Now</span>
+              </span>
+              <span className="text-sm font-extrabold">₹{Math.ceil(totalAmount * 0.5)}</span>
+            </div>
+            <div className="flex justify-between items-center text-[10px] text-[#FAF6F0]/60">
+              <span>Remaining at {orderType === 'delivery' ? 'Delivery' : 'Pickup'}:</span>
+              <span>₹{totalAmount - Math.ceil(totalAmount * 0.5)}</span>
+            </div>
           </div>
         </div>
 
         {/* Trust Badge */}
-        <div className="flex items-center justify-center gap-1.5 text-[11px] text-[#2C1810]/70 font-medium">
-          <ShieldCheck className="w-4 h-4 text-emerald-600" />
-          <span>Pay on delivery / pickup via UPI or Cash</span>
+        <div className="flex items-center justify-center gap-1.5 text-[11px] text-[#2C1810]/80 font-semibold bg-amber-500/10 py-2 rounded-xl border border-amber-500/20">
+          <ShieldCheck className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+          <span>50% Advance Payment Required via UPI</span>
         </div>
       </div>
 
-      {/* WhatsApp Button */}
-      <WhatsAppButton onClick={onConfirmOrder} />
+      {/* Proceed Button */}
+      <WhatsAppButton 
+        onClick={onConfirmOrder} 
+        label="Proceed to 50% Advance Payment"
+      />
     </div>
   );
 };
