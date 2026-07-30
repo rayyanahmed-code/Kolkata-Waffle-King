@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { CreditCard, CheckCircle2, Copy, Check, Info, ArrowLeft, ShieldCheck, QrCode } from 'lucide-react';
+import { CreditCard, CheckCircle2, Copy, Check, Info, ArrowLeft, ShieldCheck, QrCode, ExternalLink, Sparkles } from 'lucide-react';
 import { OrderState } from '../types';
 import { restaurantConfig } from '../config/restaurantConfig';
 import { calculateDeliveryFee, getOrderDeliveryDistance, calculateParcelCharge } from '../utils/delivery';
@@ -32,55 +32,48 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
   const upiId = restaurantConfig.upi?.upiId || '7003459674@kotakbank';
   const payeeName = restaurantConfig.upi?.payeeName || 'MD SAMIR IQBAL';
 
-  // Standard clean parameters according to NPCI UPI specification
-  // Avoid literal %20 in payeeName so GPay doesn't render "MD%20SAMIR%20IQBAL"
   const cleanPayeeName = payeeName;
   const transactionNote = 'Advance';
 
-  // Universal standard UPI URI - clean NPCI parameters
+  // Universal standard UPI URI protocol
   const upiUri = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(cleanPayeeName)}&am=${advanceAmount}&cu=INR&tn=${encodeURIComponent(transactionNote)}`;
   
-  // Clean QR Code URL using unencoded spaces for payee name for maximum scanner compatibility
+  // Clean QR Code URL
   const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(
     `upi://pay?pa=${upiId}&pn=${cleanPayeeName}&am=${advanceAmount}&cu=INR&tn=${transactionNote}`
   )}`;
 
-  // Android Package Specific Intent URLs for direct app launching
-  const getAppLink = (appName: string) => {
-    const params = `pa=${upiId}&pn=${encodeURIComponent(cleanPayeeName)}&am=${advanceAmount}&cu=INR&tn=${encodeURIComponent(transactionNote)}`;
-    
-    // Standard upi:// protocol is natively supported by BHIM, GPay, PhonePe, Paytm on Android & iOS
-    if (navigator.userAgent.toLowerCase().includes('android')) {
-      switch (appName) {
-        case 'gpay':
-          return `intent://pay?${params}#Intent;scheme=upi;package=com.google.android.apps.nbu.paisa.user;end`;
-        case 'bhim':
-          return `intent://pay?${params}#Intent;scheme=upi;package=in.org.npci.upiapp;end`;
-        case 'phonepe':
-          return `intent://pay?${params}#Intent;scheme=upi;package=com.phonepe.app;end`;
-        case 'paytm':
-          return `intent://pay?${params}#Intent;scheme=upi;package=net.one97.paytm;end`;
-        default:
-          return upiUri;
+  // Automatically copy owner's UPI ID as soon as customer opens payment screen
+  useEffect(() => {
+    try {
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(upiId);
+        setCopied(true);
+        const t = setTimeout(() => setCopied(false), 3500);
+        return () => clearTimeout(t);
       }
+    } catch (e) {
+      console.warn('Auto copy error:', e);
     }
-    return upiUri;
+  }, [upiId]);
+
+  const handleCopyUpi = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    try {
+      navigator.clipboard.writeText(upiId);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
+    } catch (err) {
+      console.warn('Clipboard write failed:', err);
+    }
   };
 
-  const handleCopyUpi = () => {
-    navigator.clipboard.writeText(upiId);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  const handleAppPay = (appName: string, link: string) => {
-    // 1. Auto-copy UPI ID so user can paste immediately if bank blocks web intent
-    navigator.clipboard.writeText(upiId);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2500);
-
-    // 2. Open UPI app via intent / scheme
-    window.location.href = link;
+  const handleQrTapToPay = () => {
+    // 1. Ensure UPI ID is copied to clipboard
+    handleCopyUpi();
+    
+    // 2. Open standard upi:// URI scheme (opens native OS app selector dialog)
+    window.location.href = upiUri;
   };
 
   return (
@@ -114,6 +107,23 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
             <span>Pay 50% Advance</span>
           </div>
         </div>
+      </div>
+
+      {/* Auto-Copied Toast Alert */}
+      <div className="bg-emerald-950 text-emerald-200 border border-emerald-700/60 p-3 rounded-2xl flex items-center justify-between shadow-md text-xs">
+        <div className="flex items-center gap-2 font-medium">
+          <Sparkles className="w-4 h-4 text-emerald-400 flex-shrink-0 animate-bounce" />
+          <span>
+            Owner UPI ID <strong className="font-mono text-white underline">{upiId}</strong> copied automatically!
+          </span>
+        </div>
+        <button
+          onClick={handleCopyUpi}
+          className="bg-emerald-800 hover:bg-emerald-700 text-white font-mono px-2 py-1 rounded-lg text-[10px] flex items-center gap-1 flex-shrink-0"
+        >
+          {copied ? <Check className="w-3 h-3 text-emerald-300" /> : <Copy className="w-3 h-3" />}
+          <span>{copied ? 'Copied' : 'Copy'}</span>
+        </button>
       </div>
 
       {/* 50% Advance Amount Card */}
@@ -152,84 +162,78 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
         </p>
       </div>
 
-      {/* QR Payment Box Section */}
+      {/* Interactive QR Payment Box Section */}
       <div className="bg-[#FAF6F0] border border-[#E6D7C3] p-5 rounded-3xl shadow-xl text-center space-y-4">
         <div className="space-y-1">
           <h3 className="font-serif font-bold text-base text-[#2C1810] flex items-center justify-center gap-1.5">
-            <QrCode className="w-4 h-4 text-[#E5A93B]" />
-            <span>Scan & Pay ₹{advanceAmount}</span>
+            <QrCode className="w-4.5 h-4.5 text-[#E5A93B]" />
+            <span>Scan or Tap QR to Pay ₹{advanceAmount}</span>
           </h3>
           <p className="text-[11px] text-[#2C1810]/70">
-            Scan using any UPI app to pay the advance amount
+            Scan with any UPI app OR tap the QR code below to choose your app
           </p>
         </div>
 
-        {/* Dynamic QR Code Card */}
-        <div className="w-56 mx-auto bg-gradient-to-b from-[#180E0A] via-[#2C1810] to-[#801030] p-4 rounded-3xl shadow-2xl border border-[#543123] text-white space-y-3">
-          <div className="bg-white p-2.5 rounded-2xl shadow-inner mx-auto w-48 h-48 flex items-center justify-center">
+        {/* Dynamic Tappable QR Code Card */}
+        <button
+          type="button"
+          onClick={handleQrTapToPay}
+          className="w-full max-w-xs mx-auto bg-gradient-to-b from-[#180E0A] via-[#2C1810] to-[#801030] p-4 rounded-3xl shadow-2xl border-2 border-[#E5A93B]/60 text-white space-y-3 block transition-transform active:scale-97 hover:scale-[1.01] cursor-pointer group text-left"
+        >
+          <div className="bg-white p-2.5 rounded-2xl shadow-inner mx-auto w-48 h-48 flex items-center justify-center relative group-hover:ring-4 ring-[#E5A93B]/50 transition-all">
             <img
               src={qrCodeUrl}
-              alt="UPI QR Code"
+              alt="UPI QR Code - Tap to pay"
               className="w-full h-full object-contain"
             />
+            <div className="absolute inset-x-2 bottom-2 bg-black/80 text-[#E5A93B] py-1 px-2 rounded-lg text-[10px] font-bold text-center flex items-center justify-center gap-1 opacity-90">
+              <ExternalLink className="w-3 h-3" />
+              <span>Tap QR to Open UPI App</span>
+            </div>
           </div>
 
           <div className="space-y-1 text-center">
             <div className="text-xs font-bold tracking-wide text-[#FAF6F0]">{payeeName}</div>
             <div className="flex items-center justify-center gap-1.5 text-[11px] text-[#FAF6F0]/80">
-              <span className="font-mono bg-black/30 px-2 py-0.5 rounded-md border border-white/10">{upiId}</span>
-              <button
+              <span className="font-mono bg-black/40 px-2 py-0.5 rounded-md border border-white/10">{upiId}</span>
+              <span
                 onClick={handleCopyUpi}
-                className="p-1 rounded-md bg-white/20 hover:bg-white/30 text-white transition-colors"
+                className="p-1 rounded-md bg-white/20 hover:bg-white/30 text-white transition-colors cursor-pointer"
                 title="Copy UPI ID"
               >
                 {copied ? <Check className="w-3 h-3 text-emerald-300" /> : <Copy className="w-3 h-3" />}
-              </button>
+              </span>
             </div>
           </div>
-        </div>
+        </button>
 
-        {/* Supported UPI Apps List with Direct Pay Links */}
-        <div className="pt-3 border-t border-[#E6D7C3]/60 space-y-2.5">
-          <p className="text-[11px] font-bold text-[#2C1810]/80">
-            Click to Pay ₹{advanceAmount} via UPI App:
-          </p>
-          <div className="flex flex-wrap items-center justify-center gap-2 text-xs font-semibold">
-            {[
-              { id: 'gpay', name: 'Google Pay (GPay)', color: 'border-blue-400 bg-blue-50/50 text-blue-900 hover:bg-blue-100', link: getAppLink('gpay') },
-              { id: 'phonepe', name: 'PhonePe', color: 'border-purple-400 bg-purple-50/50 text-purple-900 hover:bg-purple-100', link: getAppLink('phonepe') },
-              { id: 'paytm', name: 'Paytm', color: 'border-sky-400 bg-sky-50/50 text-sky-900 hover:bg-sky-100', link: getAppLink('paytm') },
-              { id: 'bhim', name: 'BHIM', color: 'border-orange-400 bg-orange-50/50 text-orange-900 hover:bg-orange-100', link: getAppLink('bhim') },
-              { id: 'any', name: 'Any UPI App', color: 'border-emerald-400 bg-emerald-50/50 text-emerald-900 hover:bg-emerald-100', link: upiUri },
-            ].map((app) => (
-              <a
-                key={app.id}
-                href={app.link}
-                onClick={(e) => {
-                  e.preventDefault();
-                  handleAppPay(app.name, app.link);
-                }}
-                className={`flex items-center gap-1 px-3 py-1.5 rounded-xl border ${app.color} shadow-xs transition-all active:scale-95 cursor-pointer font-bold text-[11px]`}
-              >
-                <span>⚡ {app.name}</span>
-              </a>
-            ))}
-          </div>
+        {/* Tap QR Button Option */}
+        <div className="pt-2 space-y-2">
+          <button
+            type="button"
+            onClick={handleQrTapToPay}
+            className="w-full py-3 px-4 rounded-xl bg-[#2C1810] hover:bg-[#3D2218] text-[#E5A93B] font-bold text-xs flex items-center justify-center gap-2 border border-[#543123] shadow-md transition-all active:scale-95 cursor-pointer"
+          >
+            <ExternalLink className="w-4 h-4 text-[#E5A93B]" />
+            <span>Tap to Pay ₹{advanceAmount} via Installed UPI Apps</span>
+          </button>
           
-          <div className="bg-amber-50 border border-amber-200 p-2.5 rounded-xl text-[11px] text-amber-900 space-y-1 text-left">
+          <div className="bg-amber-50 border border-amber-200 p-3 rounded-xl text-[11px] text-amber-900 space-y-1.5 text-left">
             <div className="font-bold flex items-center justify-between">
-              <span>💡 Bank redirect error or limit issue?</span>
+              <span className="flex items-center gap-1">
+                <span>💡 Manual Transfer Guide:</span>
+              </span>
               <button
                 type="button"
                 onClick={handleCopyUpi}
-                className="bg-[#2C1810] text-[#E5A93B] px-2 py-0.5 rounded-md font-mono text-[10px] flex items-center gap-1 active:scale-95"
+                className="bg-[#2C1810] text-[#E5A93B] px-2.5 py-1 rounded-md font-mono text-[10px] flex items-center gap-1 active:scale-95 cursor-pointer"
               >
                 {copied ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
                 <span>{copied ? 'Copied!' : 'Copy UPI ID'}</span>
               </button>
             </div>
-            <p className="text-[10px] leading-tight text-amber-800">
-              If your bank displays "This request type is not supported" or a bank limit error, simply copy <strong className="font-mono">{upiId}</strong>, open your GPay or BHIM app, and send ₹{advanceAmount} directly.
+            <p className="text-[10px] leading-relaxed text-amber-800">
+              The owner's UPI ID <strong className="font-mono bg-amber-100 px-1 py-0.5 rounded text-amber-950">{upiId}</strong> is already copied! Open your GPay, BHIM, PhonePe or Paytm app, select "Pay to UPI ID", paste, and send ₹{advanceAmount}.
             </p>
           </div>
         </div>
@@ -248,3 +252,4 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
     </motion.div>
   );
 };
+
