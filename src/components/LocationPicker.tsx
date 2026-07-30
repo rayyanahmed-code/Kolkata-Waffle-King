@@ -4,6 +4,7 @@ import { CustomerLocation } from '../types';
 import { OptionButton } from './OptionButton';
 import { restaurantConfig } from '../config/restaurantConfig';
 import { fetchRoadDistanceKm } from '../utils/delivery';
+import { geocodeKolkataAddress } from '../utils/geocoding';
 
 interface LocationPickerProps {
   onLocationSelected: (location: CustomerLocation) => void;
@@ -76,74 +77,8 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
     setIsLoading(true);
     setErrorMsg(null);
 
-    let coords: { latitude: number; longitude: number } | null = null;
-
-    const geocodeQuery = async (searchStr: string): Promise<{ latitude: number; longitude: number } | null> => {
-      try {
-        const fullQuery = searchStr.toLowerCase().includes('kolkata')
-          ? searchStr
-          : `${searchStr}, Kolkata, West Bengal`;
-        const res = await fetch(
-          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(fullQuery)}&limit=1&countrycodes=in`,
-          { headers: { Accept: 'application/json' } }
-        );
-        if (res.ok) {
-          const data = await res.json();
-          if (Array.isArray(data) && data.length > 0) {
-            const lat = parseFloat(data[0].lat);
-            const lon = parseFloat(data[0].lon);
-            if (!isNaN(lat) && !isNaN(lon)) {
-              return { latitude: lat, longitude: lon };
-            }
-          }
-        }
-      } catch (err) {
-        console.warn('Geocoding query failed:', err);
-      }
-      return null;
-    };
-
-    // Prepare candidate search terms by stripping house/door numbers & landmark prefixes for Nominatim street matching
-    const rawNoHouse = cleanAddress
-      .replace(/^[\d]+\s*[\/\-]\s*[\d]*[a-zA-Z]?\s*,?\s*/, '') // e.g. "4/1B " or "12-A "
-      .replace(/^(flat|h\.?no|house|plot|holding|room|door|no\.?|building)\s*[\#\d\/\-a-zA-Z\d]+\s*,?\s*/gi, '')
-      .replace(/^\d+[a-zA-Z]?\s*,?\s*/, '')
-      .trim();
-
-    const sanitizedWithoutLandmark = cleanAddress
-      .replace(/(near|opp|opposite|flat|room|h\.no|house no|above|behind)\s+[^,]+/gi, '')
-      .replace(/\s+/g, ' ')
-      .trim();
-
-    const candidates = Array.from(new Set([
-      rawNoHouse,
-      sanitizedWithoutLandmark,
-      cleanAddress
-    ])).filter(Boolean);
-
-    for (const cand of candidates) {
-      coords = await geocodeQuery(cand);
-      if (coords) break;
-    }
-
-    // Fallback: search pin code area if present
-    if (!coords) {
-      const pinMatch = cleanAddress.match(/\b700\d{3}\b/);
-      if (pinMatch) {
-        coords = await geocodeQuery(`Kolkata ${pinMatch[0]}`);
-      }
-    }
-
-    // Fallback to browser geolocation if geocoding returns no result
-    if (!coords && navigator.geolocation) {
-      coords = await new Promise<{ latitude: number; longitude: number } | null>((resolve) => {
-        navigator.geolocation.getCurrentPosition(
-          (pos) => resolve({ latitude: pos.coords.latitude, longitude: pos.coords.longitude }),
-          () => resolve(null),
-          { timeout: 3000, enableHighAccuracy: false }
-        );
-      });
-    }
+    // Geocode the entered address strictly without resorting to phone GPS
+    const coords = await geocodeKolkataAddress(cleanAddress);
 
     let distanceKm: number | undefined;
     if (coords) {
@@ -153,6 +88,9 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
         coords.latitude,
         coords.longitude
       );
+    } else {
+      // If geocoding returns null for an obscure address string, inform the user or estimate
+      console.warn('Could not pinpoint exact geocode for address:', cleanAddress);
     }
 
     setIsLoading(false);
