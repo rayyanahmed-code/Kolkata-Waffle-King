@@ -23,77 +23,42 @@ export async function processRazorpayPayment(params: {
 }): Promise<void> {
   const { amount, customerName, customerPhone, onSuccess, onFailure } = params;
 
-  let orderId = `order_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
-  let keyId = '';
-  let orderAmountInPaise = Math.round(amount * 100);
-  let isRealOrder = false;
-
   try {
-    // 1. Request Order Creation from Backend Vercel Serverless API
-    try {
-      const res = await fetch('/api/create-razorpay-order', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          amount,
-          currency: 'INR',
-          receipt: `rcpt_sameer_${Date.now()}`
-        })
-      });
+    // 1. Request real order creation from Vercel Serverless API
+    const res = await fetch('/api/create-razorpay-order', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        amount,
+        currency: 'INR',
+        receipt: `rcpt_sameer_${Date.now()}`
+      })
+    });
 
-      if (res.ok) {
-        const orderData = await res.json();
-        if (orderData.success && orderData.orderId) {
-          orderId = orderData.orderId;
-          keyId = orderData.keyId || '';
-          orderAmountInPaise = orderData.amount || orderAmountInPaise;
-          isRealOrder = Boolean(orderData.isRealOrder);
-        }
-      } else {
-        console.warn(`Server API returned HTTP ${res.status}`);
-      }
-    } catch (apiErr) {
-      console.warn('API call failed, continuing fallback:', apiErr);
-    }
+    const orderData = await res.json();
 
-    const isValidKey = Boolean(keyId && keyId.startsWith('rzp_') && keyId.length > 12 && !keyId.includes('chocolates'));
-
-    // 2. Fallback mode if Razorpay credentials are not configured in Vercel or SDK unavailable
-    if (!isValidKey || typeof window.Razorpay !== 'function') {
-      console.warn('Razorpay live keys not configured in environment or SDK running in sandbox, completing test order');
-      const simulatedPaymentId = `pay_rzp_${Date.now().toString(36)}${Math.random().toString(36).substring(2, 6)}`;
-      
-      try {
-        await fetch('/api/verify-razorpay-payment', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            razorpay_order_id: orderId,
-            razorpay_payment_id: simulatedPaymentId,
-          })
-        });
-      } catch (e) {
-        // Ignore verify fetch error in fallback mode
-      }
-
-      onSuccess({
-        paymentId: simulatedPaymentId,
-        orderId,
-        verified: true,
-        timestamp: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true }),
-        amount
-      });
+    if (!res.ok || !orderData.success || !orderData.orderId || !orderData.keyId) {
+      const errorMsg = orderData.error || `Failed to create Razorpay order (HTTP ${res.status})`;
+      onFailure(errorMsg);
       return;
     }
 
-    // 3. Launch Standard Razorpay Checkout Modal for configured live/test keys
+    const { orderId, keyId, amount: orderAmountInPaise } = orderData;
+
+    // 2. Ensure Razorpay SDK script is loaded in window
+    if (typeof window.Razorpay !== 'function') {
+      onFailure('Razorpay SDK script is not loaded in browser. Please reload the page or disable ad-blockers.');
+      return;
+    }
+
+    // 3. Open official Razorpay modal for payment
     const options = {
       key: keyId,
-      amount: orderAmountInPaise,
+      amount: orderAmountInPaise || Math.round(amount * 100),
       currency: 'INR',
       name: `${restaurantConfig.name} (Sameer)`,
       description: `Advance Order Payment - ₹${amount}`,
-      order_id: isRealOrder ? orderId : undefined,
+      order_id: orderId,
       prefill: {
         name: customerName || 'Valued Customer',
         contact: customerPhone || ''
@@ -103,37 +68,29 @@ export async function processRazorpayPayment(params: {
       },
       modal: {
         ondismiss: function () {
-          onFailure('Payment modal closed by user.');
+          onFailure('Payment cancelled: You closed the Razorpay payment window without completing payment.');
         }
       },
       handler: async function (response: any) {
         try {
-          // Verify signature on backend Vercel serverless function
-          let isVerified = true;
-          try {
-            const verifyRes = await fetch('/api/verify-razorpay-payment', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(response)
-            });
-            const verifyData = await verifyRes.json();
-            if (verifyData.success === false) {
-              isVerified = false;
-            }
-          } catch (e) {
-            console.warn('Verification endpoint skipped, accepting payment response');
-          }
-          
-          if (isVerified) {
+          // Cryptographically verify payment signature on backend
+          const verifyRes = await fetch('/api/verify-razorpay-payment', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(response)
+          });
+
+          const verifyData = await verifyRes.json();
+          if (verifyRes.ok && verifyData.success && verifyData.verified) {
             onSuccess({
-              paymentId: response.razorpay_payment_id || `pay_${Date.now()}`,
+              paymentId: response.razorpay_payment_id,
               orderId: response.razorpay_order_id || orderId,
               verified: true,
               timestamp: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true }),
               amount
             });
           } else {
-            onFailure('Security verification failed: Signature mismatch!');
+            onFailure(verifyData.error || 'Payment verification failed: Invalid cryptographic signature!');
           }
         } catch (err: any) {
           onFailure(`Verification error: ${err.message || 'Server check failed'}`);
@@ -143,12 +100,12 @@ export async function processRazorpayPayment(params: {
 
     const rzp = new window.Razorpay(options);
     rzp.on('payment.failed', function (response: any) {
-      onFailure(response.error?.description || 'Payment transaction failed on bank network.');
+      onFailure(response.error?.description || 'Payment transaction failed or declined by bank.');
     });
     rzp.open();
 
   } catch (err: any) {
     console.error('Razorpay process error:', err);
-    onFailure(err.message || 'Could not launch Razorpay gateway modal');
+    onFailure(err.message || 'Could not launch Razorpay payment gateway');
   }
 }

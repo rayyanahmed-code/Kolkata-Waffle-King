@@ -27,38 +27,30 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const key_id = process.env.RAZORPAY_KEY_ID;
     const key_secret = process.env.RAZORPAY_KEY_SECRET;
 
-    if (key_id && key_secret) {
-      const razorpay = new Razorpay({ key_id, key_secret });
-      const order = await razorpay.orders.create({
-        amount: Math.round(amount * 100),
-        currency,
-        receipt,
-        notes: {
-          merchant: 'The Dark Chocolate Co. (Sameer)',
-          owner: 'Sameer'
-        }
-      });
-
-      return res.status(200).json({
-        success: true,
-        orderId: order.id,
-        amount: order.amount,
-        currency: order.currency,
-        keyId: key_id,
-        isRealOrder: true
+    if (!key_id || !key_secret) {
+      return res.status(400).json({
+        success: false,
+        error: 'Razorpay API keys (RAZORPAY_KEY_ID & RAZORPAY_KEY_SECRET) are missing in Vercel environment variables. Please add them in Settings > Environment Variables.'
       });
     }
 
-    // Fallback test order mode when credentials are pending in Vercel environment
-    const mockOrderId = `order_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+    const razorpay = new Razorpay({ key_id, key_secret });
+    const order = await razorpay.orders.create({
+      amount: Math.round(amount * 100),
+      currency,
+      receipt,
+      notes: {
+        merchant: 'The Dark Chocolate Co. (Sameer)',
+        owner: 'Sameer'
+      }
+    });
+
     return res.status(200).json({
       success: true,
-      orderId: mockOrderId,
-      amount: Math.round(amount * 100),
-      currency: 'INR',
-      keyId: key_id || '',
-      isTestMode: true,
-      isRealOrder: false
+      orderId: order.id,
+      amount: order.amount,
+      currency: order.currency,
+      keyId: key_id
     });
   } catch (err: any) {
     console.error('Error creating Razorpay order:', err);
