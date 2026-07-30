@@ -1,6 +1,7 @@
 import express from 'express';
 import path from 'path';
 import crypto from 'crypto';
+import cors from 'cors';
 import { createServer as createViteServer } from 'vite';
 import Razorpay from 'razorpay';
 
@@ -8,7 +9,18 @@ async function startServer() {
   const app = express();
   const PORT = 3000;
 
+  // Enable CORS & JSON Body Parsing
+  app.use(cors());
   app.use(express.json());
+  app.use(express.urlencoded({ extended: true }));
+
+  // Request logger for debugging API endpoints
+  app.use((req, res, next) => {
+    if (req.path.startsWith('/api')) {
+      console.log(`[API ${req.method}] ${req.path}`);
+    }
+    next();
+  });
 
   // Razorpay instance initialization helper
   const getRazorpayInstance = () => {
@@ -20,10 +32,15 @@ async function startServer() {
     return null;
   };
 
+  // API Endpoint: Health Check
+  app.get('/api/health', (req, res) => {
+    res.json({ status: 'ok', server: 'Dark Chocolate Co. Razorpay Backend' });
+  });
+
   // API Endpoint: Get Public Razorpay Configuration (Key ID)
   app.get('/api/razorpay-config', (req, res) => {
     const keyId = process.env.RAZORPAY_KEY_ID || 'rzp_test_sameer_chocolates';
-    res.json({ keyId });
+    res.json({ keyId, configured: Boolean(process.env.RAZORPAY_KEY_ID) });
   });
 
   // API Endpoint: Create Razorpay Order
@@ -55,14 +72,14 @@ async function startServer() {
         });
       }
 
-      // Test/Demo fallback order creation when keys are not configured in environment
+      // Fallback test order mode when live keys are in progress or sandbox mode
       const mockOrderId = `order_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
       return res.json({
         success: true,
         orderId: mockOrderId,
         amount: Math.round(amount * 100),
         currency: 'INR',
-        keyId: 'rzp_test_sameer_chocolates',
+        keyId: process.env.RAZORPAY_KEY_ID || 'rzp_test_sameer_chocolates',
         isTestMode: true
       });
     } catch (err: any) {
@@ -135,7 +152,7 @@ async function startServer() {
   }
 
   app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Server running on http://0.0.0.0:${PORT}`);
+    console.log(`Express server running on http://0.0.0.0:${PORT}`);
   });
 }
 
