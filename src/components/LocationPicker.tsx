@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { MapPin, Navigation, Edit3, CheckCircle, AlertCircle, Loader2, ArrowLeft } from 'lucide-react';
 import { CustomerLocation } from '../types';
 import { OptionButton } from './OptionButton';
+import { restaurantConfig } from '../config/restaurantConfig';
+import { fetchRoadDistanceKm } from '../utils/delivery';
 
 interface LocationPickerProps {
   onLocationSelected: (location: CustomerLocation) => void;
@@ -29,9 +31,15 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
     }
 
     navigator.geolocation.getCurrentPosition(
-      (position) => {
+      async (position) => {
         const { latitude, longitude } = position.coords;
         const mapsUrl = `https://www.google.com/maps?q=${latitude},${longitude}`;
+        const distanceKm = await fetchRoadDistanceKm(
+          restaurantConfig.location.latitude,
+          restaurantConfig.location.longitude,
+          latitude,
+          longitude
+        );
         
         setIsLoading(false);
         onLocationSelected({
@@ -40,6 +48,7 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
           longitude,
           mapsUrl,
           address: `GPS Pin (${latitude.toFixed(4)}, ${longitude.toFixed(4)})`,
+          distanceKm,
         });
       },
       (error) => {
@@ -94,21 +103,30 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
       return null;
     };
 
-    // 1. Primary search: Exact clean address
-    coords = await geocodeQuery(cleanAddress);
+    // Prepare candidate search terms by stripping house/door numbers & landmark prefixes for Nominatim street matching
+    const rawNoHouse = cleanAddress
+      .replace(/^[\d]+\s*[\/\-]\s*[\d]*[a-zA-Z]?\s*,?\s*/, '') // e.g. "4/1B " or "12-A "
+      .replace(/^(flat|h\.?no|house|plot|holding|room|door|no\.?|building)\s*[\#\d\/\-a-zA-Z\d]+\s*,?\s*/gi, '')
+      .replace(/^\d+[a-zA-Z]?\s*,?\s*/, '')
+      .trim();
 
-    // 2. Secondary search: Strip landmark prefixes (near, opp, flat, room, etc.)
-    if (!coords) {
-      const sanitized = cleanAddress
-        .replace(/(near|opp|opposite|flat|room|h\.no|house no|above|behind)\s+[^,]+/gi, '')
-        .replace(/\s+/g, ' ')
-        .trim();
-      if (sanitized && sanitized !== cleanAddress) {
-        coords = await geocodeQuery(sanitized);
-      }
+    const sanitizedWithoutLandmark = cleanAddress
+      .replace(/(near|opp|opposite|flat|room|h\.no|house no|above|behind)\s+[^,]+/gi, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    const candidates = Array.from(new Set([
+      rawNoHouse,
+      sanitizedWithoutLandmark,
+      cleanAddress
+    ])).filter(Boolean);
+
+    for (const cand of candidates) {
+      coords = await geocodeQuery(cand);
+      if (coords) break;
     }
 
-    // 3. Tertiary search: Extract postal code or main area if present
+    // Fallback: search pin code area if present
     if (!coords) {
       const pinMatch = cleanAddress.match(/\b700\d{3}\b/);
       if (pinMatch) {
@@ -116,7 +134,7 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
       }
     }
 
-    // 4. Fallback to browser geolocation if geocoding returns no result
+    // Fallback to browser geolocation if geocoding returns no result
     if (!coords && navigator.geolocation) {
       coords = await new Promise<{ latitude: number; longitude: number } | null>((resolve) => {
         navigator.geolocation.getCurrentPosition(
@@ -127,6 +145,16 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
       });
     }
 
+    let distanceKm: number | undefined;
+    if (coords) {
+      distanceKm = await fetchRoadDistanceKm(
+        restaurantConfig.location.latitude,
+        restaurantConfig.location.longitude,
+        coords.latitude,
+        coords.longitude
+      );
+    }
+
     setIsLoading(false);
 
     onLocationSelected({
@@ -134,6 +162,7 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
       address: cleanAddress,
       latitude: coords?.latitude,
       longitude: coords?.longitude,
+      distanceKm,
     });
   };
 

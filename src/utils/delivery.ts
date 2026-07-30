@@ -63,6 +63,39 @@ export function calculateDistanceKm(
 }
 
 /**
+ * Calculates real driving road distance using OSRM, falling back to scaled Haversine for city driving.
+ */
+export async function fetchRoadDistanceKm(
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number
+): Promise<number> {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3000);
+    const url = `https://router.project-osrm.org/route/v1/driving/${lon1},${lat1};${lon2},${lat2}?overview=false`;
+    const res = await fetch(url, { signal: controller.signal });
+    clearTimeout(timeoutId);
+    if (res.ok) {
+      const data = await res.json();
+      if (data.code === 'Ok' && Array.isArray(data.routes) && data.routes.length > 0) {
+        const meters = data.routes[0].distance;
+        if (typeof meters === 'number' && meters > 0) {
+          return Math.round((meters / 1000) * 100) / 100;
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('OSRM road routing failed/timed out, using scaled city distance:', err);
+  }
+
+  // Fallback: Haversine straight-line distance scaled by 1.35 for Kolkata city driving routes
+  const straightLine = calculateDistanceKm(lat1, lon1, lat2, lon2);
+  return Math.round(straightLine * 1.35 * 100) / 100;
+}
+
+/**
  * Delivery fee rules for Kolkata Waffle King:
  * 1. If distance <= 2.00 km:
  *    - Subtotal >= ₹300: ₹0 (Free Delivery)
@@ -93,19 +126,42 @@ export function calculateDeliveryFee(
 }
 
 /**
- * Helper to get distance for an order if customer location coordinates are available.
+ * Helper to get distance for an order if customer location object or coordinates are available.
+ * Supports passing either a location object (with optional distanceKm) or direct lat/lon numbers.
  */
 export function getOrderDeliveryDistance(
-  latitude?: number,
+  locationOrLat?: { latitude?: number; longitude?: number; distanceKm?: number } | number | null,
   longitude?: number
 ): number | null {
-  if (latitude === undefined || longitude === undefined || latitude === null || longitude === null) {
-    return null;
+  if (locationOrLat === undefined || locationOrLat === null) return null;
+
+  if (typeof locationOrLat === 'number') {
+    if (longitude === undefined || longitude === null) return null;
+    return calculateDistanceKm(
+      restaurantConfig.location.latitude,
+      restaurantConfig.location.longitude,
+      locationOrLat,
+      longitude
+    );
   }
-  return calculateDistanceKm(
-    restaurantConfig.location.latitude,
-    restaurantConfig.location.longitude,
-    latitude,
-    longitude
-  );
+
+  if (typeof locationOrLat.distanceKm === 'number') {
+    return locationOrLat.distanceKm;
+  }
+
+  if (
+    locationOrLat.latitude !== undefined &&
+    locationOrLat.latitude !== null &&
+    locationOrLat.longitude !== undefined &&
+    locationOrLat.longitude !== null
+  ) {
+    return calculateDistanceKm(
+      restaurantConfig.location.latitude,
+      restaurantConfig.location.longitude,
+      locationOrLat.latitude,
+      locationOrLat.longitude
+    );
+  }
+
+  return null;
 }

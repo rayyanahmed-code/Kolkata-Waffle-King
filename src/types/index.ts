@@ -36,6 +36,7 @@ export interface CustomerLocation {
   mapsUrl?: string;
   latitude?: number;
   longitude?: number;
+  distanceKm?: number;
 }
 
 export interface OrderState {

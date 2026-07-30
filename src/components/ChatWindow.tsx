@@ -5,7 +5,7 @@ import { OrderState, StepId, ChatMessage, MenuItem, CustomerLocation } from '../
 import { restaurantConfig } from '../config/restaurantConfig';
 import { MENU_ITEMS, MENU_CATEGORIES } from '../data/menu';
 import { generateWhatsAppLink } from '../utils/whatsapp';
-import { calculateDistanceKm } from '../utils/delivery';
+import { calculateDistanceKm, getOrderDeliveryDistance } from '../utils/delivery';
 import { MessageBubble } from './MessageBubble';
 import { OptionButton } from './OptionButton';
 import { LocationPicker } from './LocationPicker';
@@ -320,13 +320,8 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   const handleLocationSelected = (location: CustomerLocation) => {
     setOrder((prev) => ({ ...prev, location }));
     let distanceInfo = '';
-    if (location.latitude && location.longitude) {
-      const dist = calculateDistanceKm(
-        restaurantConfig.location.latitude,
-        restaurantConfig.location.longitude,
-        location.latitude,
-        location.longitude
-      );
+    const dist = getOrderDeliveryDistance(location);
+    if (dist !== null) {
       distanceInfo = ` (${dist.toFixed(2)} km from Kolkata Waffle King)`;
     }
     const locText = location.type === 'geo' ? `📍 Shared Current Geolocation${distanceInfo}` : `🏠 ${location.address}`;

@@ -14,7 +14,7 @@ export function formatWhatsAppMessage(order: OrderState): string {
   const parcelFee = calculateParcelCharge(cart);
 
   const isDelivery = orderType === 'delivery';
-  const distanceKm = isDelivery ? getOrderDeliveryDistance(location?.latitude, location?.longitude) : null;
+  const distanceKm = isDelivery ? getOrderDeliveryDistance(location) : null;
   const deliveryFee = isDelivery ? calculateDeliveryFee(distanceKm, subtotal) : 0;
   const grandTotal = subtotal + parcelFee + deliveryFee;
 

@@ -24,7 +24,7 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
   const subtotal = cart.reduce((sum, item) => sum + item.item.price * item.quantity, 0);
   const parcelCharge = calculateParcelCharge(cart);
   const nonBeverageCount = getNonBeverageItemCount(cart);
-  const distanceKm = orderType === 'delivery' ? getOrderDeliveryDistance(location?.latitude, location?.longitude) : null;
+  const distanceKm = orderType === 'delivery' ? getOrderDeliveryDistance(location) : null;
   const deliveryFee = orderType === 'delivery' ? calculateDeliveryFee(distanceKm, subtotal) : 0;
   const totalAmount = subtotal + parcelCharge + deliveryFee;
 
