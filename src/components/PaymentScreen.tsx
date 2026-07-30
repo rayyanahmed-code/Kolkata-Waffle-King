@@ -32,15 +32,15 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
   const upiId = restaurantConfig.upi?.upiId || '7003459674@kotakbank';
   const payeeName = restaurantConfig.upi?.payeeName || 'MD SAMIR IQBAL';
 
-  const cleanPayeeName = payeeName;
-  const transactionNote = 'Advance';
+  // Standard clean NPCI UPI parameters without %20 encoding artifacts
+  const cleanPayeeName = payeeName.replace(/%20/g, ' ');
 
-  // Universal standard UPI URI protocol
-  const upiUri = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(cleanPayeeName)}&am=${advanceAmount}&cu=INR&tn=${encodeURIComponent(transactionNote)}`;
+  // Universal standard UPI URI protocol - unencoded spaces so GPay shows "MD SAMIR IQBAL" clean
+  const upiUri = `upi://pay?pa=${upiId}&pn=${cleanPayeeName}&am=${advanceAmount}&cu=INR`;
   
   // Clean QR Code URL
   const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(
-    `upi://pay?pa=${upiId}&pn=${cleanPayeeName}&am=${advanceAmount}&cu=INR&tn=${transactionNote}`
+    `upi://pay?pa=${upiId}&pn=${cleanPayeeName}&am=${advanceAmount}&cu=INR`
   )}`;
 
   // Automatically copy owner's UPI ID as soon as customer opens payment screen
@@ -126,7 +126,26 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
         </button>
       </div>
 
-      {/* 50% Advance Amount Card */}
+      {/* BHIM / Bank Security Notice */}
+      <div className="bg-amber-950/90 text-amber-100 border border-amber-600/70 p-3.5 rounded-2xl shadow-md text-xs space-y-2">
+        <div className="flex items-center justify-between font-bold text-[#E5A93B]">
+          <span className="flex items-center gap-1.5">
+            <Info className="w-4 h-4 text-[#E5A93B] flex-shrink-0" />
+            <span>Using BHIM / Bank App?</span>
+          </span>
+          <button
+            type="button"
+            onClick={handleCopyUpi}
+            className="bg-[#E5A93B] text-[#180E0A] px-2.5 py-1 rounded-lg font-mono text-[10px] font-bold flex items-center gap-1 active:scale-95 cursor-pointer"
+          >
+            {copied ? <Check className="w-3 h-3 text-emerald-950" /> : <Copy className="w-3 h-3" />}
+            <span>{copied ? 'Copied!' : 'Copy UPI ID'}</span>
+          </button>
+        </div>
+        <p className="text-[11px] leading-relaxed text-amber-200/90">
+          If BHIM or your bank app displays <span className="text-rose-300 font-medium">"This request type is not supported"</span> when clicking deep links, open your BHIM app directly, select <strong className="text-white">Pay to UPI ID</strong>, paste <strong className="font-mono text-[#E5A93B]">{upiId}</strong>, and enter ₹{advanceAmount}.
+        </p>
+      </div>
       <div className="bg-[#FAF6F0] border border-[#E6D7C3] p-4 rounded-2xl shadow-md space-y-3">
         <div className="flex items-center justify-between pb-2 border-b border-[#E6D7C3]/60">
           <span className="text-xs font-bold text-[#2C1810]/70 uppercase tracking-wider">Total Order Bill</span>
