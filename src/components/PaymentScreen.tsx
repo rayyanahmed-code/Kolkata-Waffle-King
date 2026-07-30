@@ -97,15 +97,15 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
       </div>
 
       {/* Customer Explanation Note */}
-      <div className="bg-amber-500/10 border border-amber-500/30 p-4 rounded-2xl text-xs space-y-2">
-        <div className="flex items-center gap-2 font-bold text-[#2C1810] text-sm">
-          <Info className="w-4 h-4 text-[#E5A93B] flex-shrink-0" />
-          <span>Why do we charge 50% advance?</span>
+      <div className="bg-[#2C1810] text-[#FAF6F0] border-2 border-[#E5A93B]/60 p-4 rounded-2xl text-xs space-y-2.5 shadow-xl">
+        <div className="flex items-center gap-2 font-bold text-[#E5A93B] text-sm">
+          <Info className="w-4.5 h-4.5 text-[#E5A93B] flex-shrink-0" />
+          <span className="font-serif font-extrabold text-[#E5A93B] text-base">Why do we charge 50% advance?</span>
         </div>
-        <p className="text-[#2C1810]/85 text-xs leading-relaxed">
+        <p className="text-[#FAF6F0] text-xs leading-relaxed font-medium">
           To avoid fake orders, last-minute cancellations, and food wastage, Kolkata Waffle King requires a 50% advance payment before preparing your order.
         </p>
-        <p className="text-[#2C1810]/80 text-[11px] font-medium pt-1 border-t border-amber-500/20">
+        <p className="text-[#E5A93B] text-[11px] font-bold pt-2 border-t border-[#543123]">
           💡 The remaining 50% amount can be paid during delivery or pickup.
         </p>
       </div>
@@ -147,16 +147,37 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
           </div>
         </div>
 
-        {/* Supported UPI Apps List */}
-        <div className="pt-2 border-t border-[#E6D7C3]/60 space-y-2">
-          <p className="text-[11px] font-bold text-[#2C1810]/70">You can pay using:</p>
-          <div className="flex flex-wrap items-center justify-center gap-1.5 text-[11px] font-semibold text-[#2C1810]">
-            <span className="bg-white border border-[#E6D7C3] px-2.5 py-1 rounded-xl shadow-xs">✓ Google Pay (GPay)</span>
-            <span className="bg-white border border-[#E6D7C3] px-2.5 py-1 rounded-xl shadow-xs">✓ PhonePe</span>
-            <span className="bg-white border border-[#E6D7C3] px-2.5 py-1 rounded-xl shadow-xs">✓ Paytm</span>
-            <span className="bg-white border border-[#E6D7C3] px-2.5 py-1 rounded-xl shadow-xs">✓ BHIM</span>
-            <span className="bg-white border border-[#E6D7C3] px-2.5 py-1 rounded-xl shadow-xs">✓ Any UPI App</span>
+        {/* Supported UPI Apps List with Direct Pay Links */}
+        <div className="pt-3 border-t border-[#E6D7C3]/60 space-y-2.5">
+          <p className="text-[11px] font-bold text-[#2C1810]/80">
+            Click to Pay ₹{advanceAmount} via UPI App:
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-2 text-xs font-semibold">
+            {[
+              { name: 'Google Pay (GPay)', color: 'border-blue-400 bg-blue-50/50 text-blue-900 hover:bg-blue-100', link: `tez://upi/pay?${upiUri.split('?')[1]}` },
+              { name: 'PhonePe', color: 'border-purple-400 bg-purple-50/50 text-purple-900 hover:bg-purple-100', link: `phonepe://pay?${upiUri.split('?')[1]}` },
+              { name: 'Paytm', color: 'border-sky-400 bg-sky-50/50 text-sky-900 hover:bg-sky-100', link: `paytmmp://pay?${upiUri.split('?')[1]}` },
+              { name: 'BHIM', color: 'border-orange-400 bg-orange-50/50 text-orange-900 hover:bg-orange-100', link: `bhim://pay?${upiUri.split('?')[1]}` },
+              { name: 'Any UPI App', color: 'border-emerald-400 bg-emerald-50/50 text-emerald-900 hover:bg-emerald-100', link: upiUri },
+            ].map((app, idx) => (
+              <a
+                key={idx}
+                href={app.link}
+                onClick={(e) => {
+                  // Fallback to standard generic upi:// if deep link fails or on desktop
+                  setTimeout(() => {
+                    window.location.href = upiUri;
+                  }, 500);
+                }}
+                className={`flex items-center gap-1 px-3 py-1.5 rounded-xl border ${app.color} shadow-xs transition-all active:scale-95 cursor-pointer font-bold text-[11px]`}
+              >
+                <span>⚡ {app.name}</span>
+              </a>
+            ))}
           </div>
+          <p className="text-[10px] text-[#2C1810]/60 italic">
+            Tapping any button will automatically open your UPI app with ₹{advanceAmount} pre-filled.
+          </p>
         </div>
       </div>
 

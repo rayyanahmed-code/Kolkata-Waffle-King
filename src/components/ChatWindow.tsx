@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { User, Phone, CheckCircle, ArrowRight, ShoppingBag, Sparkles, MapPin, Search } from 'lucide-react';
+import { User, Phone, CheckCircle, ArrowRight, ArrowLeft, ShoppingBag, Sparkles, MapPin, Search } from 'lucide-react';
 import { OrderState, StepId, ChatMessage, MenuItem, CustomerLocation } from '../types';
 import { restaurantConfig } from '../config/restaurantConfig';
 import { MENU_ITEMS, MENU_CATEGORIES } from '../data/menu';
@@ -165,6 +165,43 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   }, [currentStep, activeStepId]);
 
   // STEP TRANSITION HANDLERS
+
+  // Step Navigation Back Handlers
+  const handleBackToWelcome = () => {
+    setActiveStepId('welcome');
+    setCurrentStep(0);
+  };
+
+  const handleBackToName = () => {
+    if (!nameInput && order.customerName) {
+      setNameInput(order.customerName);
+    }
+    setActiveStepId('name');
+    setCurrentStep(1);
+  };
+
+  const handleBackToPhone = () => {
+    if (!phoneInput && order.customerPhone) {
+      setPhoneInput(order.customerPhone);
+    }
+    setActiveStepId('phone');
+    setCurrentStep(2);
+  };
+
+  const handleBackToOrderType = () => {
+    setActiveStepId('order_type');
+    setCurrentStep(3);
+  };
+
+  const handleBackFromMenu = () => {
+    if (order.orderType === 'delivery') {
+      setActiveStepId('location');
+      setCurrentStep(4);
+    } else {
+      setActiveStepId('order_type');
+      setCurrentStep(3);
+    }
+  };
 
   // Start Order -> Move to Step 1 (Name)
   const handleStartOrder = () => {
@@ -413,10 +450,20 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
             onSubmit={handleNameSubmit}
             className="mt-3 p-4 rounded-2xl bg-[#FAF6F0] border border-[#E6D7C3] shadow-xl space-y-3 text-[#2C1810]"
           >
-            <label className="block text-xs font-bold text-[#2C1810] flex items-center gap-1.5">
-              <User className="w-4 h-4 text-[#E5A93B]" />
-              <span>Your Name</span>
-            </label>
+            <div className="flex items-center justify-between pb-1 border-b border-[#E6D7C3]/60">
+              <label className="text-xs font-bold text-[#2C1810] flex items-center gap-1.5">
+                <User className="w-4 h-4 text-[#E5A93B]" />
+                <span>Your Name</span>
+              </label>
+              <button
+                type="button"
+                onClick={handleBackToWelcome}
+                className="text-[11px] font-semibold text-[#2C1810]/70 hover:text-[#2C1810] flex items-center gap-1 transition-colors px-2 py-0.5 rounded-lg hover:bg-[#E6D7C3]/40"
+              >
+                <ArrowLeft className="w-3.5 h-3.5 text-[#E5A93B]" />
+                <span>Back</span>
+              </button>
+            </div>
             <div className="relative w-full">
               <input
                 type="text"
@@ -467,10 +514,20 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
             onSubmit={handlePhoneSubmit}
             className="mt-3 p-4 rounded-2xl bg-[#FAF6F0] border border-[#E6D7C3] shadow-xl space-y-3 text-[#2C1810]"
           >
-            <label className="block text-xs font-bold text-[#2C1810] flex items-center gap-1.5">
-              <Phone className="w-4 h-4 text-[#E5A93B]" />
-              <span>10-Digit Phone Number</span>
-            </label>
+            <div className="flex items-center justify-between pb-1 border-b border-[#E6D7C3]/60">
+              <label className="text-xs font-bold text-[#2C1810] flex items-center gap-1.5">
+                <Phone className="w-4 h-4 text-[#E5A93B]" />
+                <span>10-Digit Phone Number</span>
+              </label>
+              <button
+                type="button"
+                onClick={handleBackToName}
+                className="text-[11px] font-semibold text-[#2C1810]/70 hover:text-[#2C1810] flex items-center gap-1 transition-colors px-2 py-0.5 rounded-lg hover:bg-[#E6D7C3]/40"
+              >
+                <ArrowLeft className="w-3.5 h-3.5 text-[#E5A93B]" />
+                <span>Back to Name</span>
+              </button>
+            </div>
             <div className="relative flex items-center">
               <span className="absolute left-3 text-xs font-bold text-[#2C1810]/60">
                 +91
@@ -508,6 +565,16 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
             animate={{ opacity: 1, y: 0 }}
             className="mt-3 space-y-2.5"
           >
+            <div className="flex items-center justify-start mb-1">
+              <button
+                type="button"
+                onClick={handleBackToPhone}
+                className="text-[11px] font-semibold text-[#FAF6F0]/80 hover:text-[#E5A93B] flex items-center gap-1 transition-colors py-1 px-2.5 bg-[#2C1810] border border-[#543123] rounded-xl"
+              >
+                <ArrowLeft className="w-3.5 h-3.5 text-[#E5A93B]" />
+                <span>Back to Phone Number</span>
+              </button>
+            </div>
             <OptionButton
               label="🚚 Delivery"
               subtitle="Delivered hot & crisp to your doorstep"
@@ -529,7 +596,10 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
           >
-            <LocationPicker onLocationSelected={handleLocationSelected} />
+            <LocationPicker
+              onLocationSelected={handleLocationSelected}
+              onBack={handleBackToOrderType}
+            />
           </motion.div>
         )}
 
@@ -540,6 +610,16 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
             animate={{ opacity: 1, y: 0 }}
             className="mt-3 space-y-3"
           >
+            <div className="flex items-center justify-start mb-1">
+              <button
+                type="button"
+                onClick={handleBackFromMenu}
+                className="text-[11px] font-semibold text-[#FAF6F0]/80 hover:text-[#E5A93B] flex items-center gap-1 transition-colors py-1 px-2.5 bg-[#2C1810] border border-[#543123] rounded-xl"
+              >
+                <ArrowLeft className="w-3.5 h-3.5 text-[#E5A93B]" />
+                <span>Back to {order.orderType === 'delivery' ? 'Location' : 'Order Type'}</span>
+              </button>
+            </div>
             {/* Category Pills & Search */}
             <div className="bg-[#2C1810] p-2.5 rounded-2xl border border-[#543123] shadow-lg space-y-2">
               <CategorySelector

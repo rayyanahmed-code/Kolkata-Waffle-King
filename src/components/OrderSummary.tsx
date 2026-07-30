@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
-import { ShoppingBag, MapPin, Phone, User, MessageSquare, ArrowRight, ShieldCheck, Truck, Store, ExternalLink } from 'lucide-react';
+import { ShoppingBag, MapPin, Phone, User, MessageSquare, ArrowRight, ArrowLeft, ShieldCheck, Truck, Store, ExternalLink } from 'lucide-react';
 import { OrderState } from '../types';
 import { restaurantConfig } from '../config/restaurantConfig';
 import { calculateDeliveryFee, getOrderDeliveryDistance, calculateParcelCharge, getNonBeverageItemCount } from '../utils/delivery';
@@ -30,6 +30,18 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
 
   return (
     <div className="w-full space-y-4 my-2">
+      {/* Top Back Navigation Bar */}
+      <div className="flex items-center justify-between">
+        <button
+          type="button"
+          onClick={onEditItems}
+          className="text-[11px] font-semibold text-[#FAF6F0]/80 hover:text-[#E5A93B] flex items-center gap-1 transition-colors py-1 px-2.5 bg-[#2C1810] border border-[#543123] rounded-xl"
+        >
+          <ArrowLeft className="w-3.5 h-3.5 text-[#E5A93B]" />
+          <span>Back to Menu</span>
+        </button>
+      </div>
+
       {/* Receipt Card */}
       <div className="bg-[#FAF6F0] rounded-2xl border border-[#E6D7C3] p-4 shadow-xl space-y-4 text-[#2C1810]">
         {/* Receipt Header */}

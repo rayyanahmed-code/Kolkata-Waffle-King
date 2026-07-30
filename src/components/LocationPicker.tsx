@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
-import { MapPin, Navigation, Edit3, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { MapPin, Navigation, Edit3, CheckCircle, AlertCircle, Loader2, ArrowLeft } from 'lucide-react';
 import { CustomerLocation } from '../types';
 import { OptionButton } from './OptionButton';
 
 interface LocationPickerProps {
   onLocationSelected: (location: CustomerLocation) => void;
+  onBack?: () => void;
 }
 
 export const LocationPicker: React.FC<LocationPickerProps> = ({
   onLocationSelected,
+  onBack,
 }) => {
   const [mode, setMode] = useState<'select' | 'manual'>('select');
   const [isLoading, setIsLoading] = useState(false);
@@ -78,6 +80,19 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
 
       {mode === 'select' ? (
         <div className="space-y-2.5">
+          {onBack && (
+            <div className="flex items-center justify-start">
+              <button
+                type="button"
+                onClick={onBack}
+                className="text-[11px] font-semibold text-[#FAF6F0]/80 hover:text-[#E5A93B] flex items-center gap-1 transition-colors py-1 px-2.5 bg-[#2C1810] border border-[#543123] rounded-xl"
+              >
+                <ArrowLeft className="w-3.5 h-3.5 text-[#E5A93B]" />
+                <span>Back to Order Type</span>
+              </button>
+            </div>
+          )}
+
           <OptionButton
             label={isLoading ? 'Getting Location...' : 'Share Current Location'}
             subtitle="GPS Pin for accurate 30-min delivery"
