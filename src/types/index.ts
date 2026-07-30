@@ -46,8 +46,6 @@ export interface OrderState {
   location: CustomerLocation | null;
   cart: CartItem[];
   specialInstructions: string;
-  paymentScreenshot?: string;
-  paymentScreenshotFile?: File;
 }
 
 export interface ChatMessage {

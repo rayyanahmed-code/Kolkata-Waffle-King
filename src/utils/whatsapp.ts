@@ -3,7 +3,7 @@ import { restaurantConfig } from '../config/restaurantConfig';
 import { calculateDeliveryFee, getOrderDeliveryDistance, calculateParcelCharge } from './delivery';
 
 export function formatWhatsAppMessage(order: OrderState): string {
-  const { customerName, customerPhone, orderType, location, cart, specialInstructions, paymentScreenshot } = order;
+  const { customerName, customerPhone, orderType, location, cart, specialInstructions } = order;
 
   // Calculate items list formatted
   const itemsText = cart
@@ -55,23 +55,16 @@ export function formatWhatsAppMessage(order: OrderState): string {
 🛍️ *Pickup:* Free
 💵 *Total Amount:* ₹${grandTotal}`;
 
-  const screenshotStatus = paymentScreenshot
-    ? `✅ Payment Screenshot selected from gallery (Attaching now...)`
-    : `⚠️ Remember to attach payment screenshot in WhatsApp chat!`;
-
   const paymentDetailsSection = `💳 *Payment Details*
 
 Payment Method:
 UPI QR Payment
 
-Advance Paid:
+Advance Paid (50%):
 ₹${advancePaid}
 
-Remaining Amount:
-₹${remainingAmount}
-
-📸 *Screenshot Status:*
-${screenshotStatus}`;
+Remaining Amount (Pay at Delivery/Pickup):
+₹${remainingAmount}`;
 
   const message = `🍫 *NEW ORDER - ${restaurantConfig.name}*
 
@@ -111,9 +104,9 @@ ${instructionsText}
 
 ━━━━━━━━━━━━━━━━━━
 
-📸 *IMPORTANT*
-Please send this message along with your payment screenshot.
-Orders without payment proof may not be confirmed.`;
+📸 *IMPORTANT REMINDER*
+Please attach your UPI payment screenshot to this WhatsApp message before pressing Send!
+Orders are verified once payment proof is received.`;
 
   return message;
 }
@@ -125,26 +118,6 @@ export function generateWhatsAppLink(order: OrderState): string {
 }
 
 export async function shareOrSendWhatsAppOrder(order: OrderState): Promise<void> {
-  const text = formatWhatsAppMessage(order);
-  const file = order.paymentScreenshotFile;
-
-  // Try Web Share API with image file if supported on device (e.g. mobile Chrome/Safari)
-  if (file && navigator.canShare) {
-    try {
-      if (navigator.canShare({ files: [file] })) {
-        await navigator.share({
-          title: `${restaurantConfig.name} Order & Payment Proof`,
-          text: text,
-          files: [file],
-        });
-        return;
-      }
-    } catch (err) {
-      console.warn('Web Share API call dismissed or failed:', err);
-    }
-  }
-
-  // Fallback to wa.me link
   const waUrl = generateWhatsAppLink(order);
   window.open(waUrl, '_blank');
 }

@@ -389,20 +389,12 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
     );
   };
 
-  const handleUpdateScreenshot = (dataUrl: string | undefined, file: File | undefined) => {
-    setOrder((prev) => ({
-      ...prev,
-      paymentScreenshot: dataUrl,
-      paymentScreenshotFile: file,
-    }));
-  };
-
   // Payment Completed Handler -> Move to Payment Confirmation Screen
   const handlePaymentCompleted = () => {
-    addUserMessage("✅ I Have Completed the Payment", 'payment_confirmation');
+    addUserMessage("✅ I Have Paid & Taken Screenshot", 'payment_confirmation');
     setActiveStepId('payment_confirmation');
     addAssistantMessage(
-      "Payment step completed! Your selected payment screenshot is ready to be sent along with your order details on WhatsApp. 📸",
+      "Awesome! Your order summary is ready. Please launch WhatsApp below and remember to attach your payment screenshot in the WhatsApp chat! 📸",
       400,
       false,
       'payment_confirmation'
@@ -765,7 +757,6 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                 pruneMessagesToStep('summary');
                 setActiveStepId('summary');
               }}
-              onUpdateScreenshot={handleUpdateScreenshot}
             />
           </motion.div>
         )}
@@ -783,7 +774,6 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                 pruneMessagesToStep('payment');
                 setActiveStepId('payment');
               }}
-              onUpdateScreenshot={handleUpdateScreenshot}
             />
           </motion.div>
         )}

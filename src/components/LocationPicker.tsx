@@ -31,37 +31,59 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
       return;
     }
 
+    const processPosition = async (position: GeolocationPosition) => {
+      const { latitude, longitude } = position.coords;
+      const mapsUrl = `https://www.google.com/maps?q=${latitude},${longitude}`;
+      const distanceKm = await fetchRoadDistanceKm(
+        restaurantConfig.location.latitude,
+        restaurantConfig.location.longitude,
+        latitude,
+        longitude
+      );
+      
+      setIsLoading(false);
+      onLocationSelected({
+        type: 'geo',
+        latitude,
+        longitude,
+        mapsUrl,
+        address: `GPS Pin (${latitude.toFixed(4)}, ${longitude.toFixed(4)})`,
+        distanceKm,
+      });
+    };
+
+    // Stage 1: Try High Accuracy with 5-second timeout
     navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const { latitude, longitude } = position.coords;
-        const mapsUrl = `https://www.google.com/maps?q=${latitude},${longitude}`;
-        const distanceKm = await fetchRoadDistanceKm(
-          restaurantConfig.location.latitude,
-          restaurantConfig.location.longitude,
-          latitude,
-          longitude
+      processPosition,
+      (highAccError) => {
+        console.warn('High accuracy geolocation timed out or unavailable, trying low accuracy fallback:', highAccError);
+        if (highAccError.code === 1) { // PERMISSION_DENIED
+          setIsLoading(false);
+          setErrorMsg('Location permission was denied. Please type your delivery address below.');
+          setMode('manual');
+          return;
+        }
+
+        // Stage 2: Fallback to Low Accuracy (Wi-Fi / Cell tower / IP based, fast & reliable)
+        navigator.geolocation.getCurrentPosition(
+          processPosition,
+          (lowAccError) => {
+            console.warn('Low accuracy geolocation also failed:', lowAccError);
+            setIsLoading(false);
+            setErrorMsg('Unable to detect GPS position automatically. Please type your delivery address below.');
+            setMode('manual');
+          },
+          {
+            enableHighAccuracy: false,
+            timeout: 10000,
+            maximumAge: 60000,
+          }
         );
-        
-        setIsLoading(false);
-        onLocationSelected({
-          type: 'geo',
-          latitude,
-          longitude,
-          mapsUrl,
-          address: `GPS Pin (${latitude.toFixed(4)}, ${longitude.toFixed(4)})`,
-          distanceKm,
-        });
-      },
-      (error) => {
-        console.warn('Geolocation error:', error);
-        setIsLoading(false);
-        setErrorMsg('Location permission was denied or unavailable. Please type your delivery address below.');
-        setMode('manual');
       },
       {
         enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 0,
+        timeout: 5000,
+        maximumAge: 10000,
       }
     );
   };
@@ -80,26 +102,22 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
     // Geocode the entered address strictly without resorting to phone GPS
     const coords = await geocodeKolkataAddress(cleanAddress);
 
-    let distanceKm: number | undefined;
-    if (coords) {
-      distanceKm = await fetchRoadDistanceKm(
-        restaurantConfig.location.latitude,
-        restaurantConfig.location.longitude,
-        coords.latitude,
-        coords.longitude
-      );
-    } else {
-      // If geocoding returns null for an obscure address string, inform the user or estimate
-      console.warn('Could not pinpoint exact geocode for address:', cleanAddress);
-    }
+    const distanceKm = await fetchRoadDistanceKm(
+      restaurantConfig.location.latitude,
+      restaurantConfig.location.longitude,
+      coords.latitude,
+      coords.longitude
+    );
+    const mapsUrl = `https://www.google.com/maps?q=${coords.latitude},${coords.longitude}`;
 
     setIsLoading(false);
 
     onLocationSelected({
       type: 'manual',
       address: cleanAddress,
-      latitude: coords?.latitude,
-      longitude: coords?.longitude,
+      latitude: coords.latitude,
+      longitude: coords.longitude,
+      mapsUrl,
       distanceKm,
     });
   };

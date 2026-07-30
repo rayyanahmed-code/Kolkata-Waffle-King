@@ -71,9 +71,14 @@ export async function fetchRoadDistanceKm(
   lat2: number,
   lon2: number
 ): Promise<number> {
+  const straightLine = calculateDistanceKm(lat1, lon1, lat2, lon2);
+  if (straightLine < 0.1) {
+    return 0.1;
+  }
+
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 3000);
+    const timeoutId = setTimeout(() => controller.abort(), 2500);
     const url = `https://router.project-osrm.org/route/v1/driving/${lon1},${lat1};${lon2},${lat2}?overview=false`;
     const res = await fetch(url, { signal: controller.signal });
     clearTimeout(timeoutId);
@@ -82,7 +87,10 @@ export async function fetchRoadDistanceKm(
       if (data.code === 'Ok' && Array.isArray(data.routes) && data.routes.length > 0) {
         const meters = data.routes[0].distance;
         if (typeof meters === 'number' && meters > 0) {
-          return Math.round((meters / 1000) * 100) / 100;
+          const roadKm = Math.round((meters / 1000) * 100) / 100;
+          if (roadKm >= straightLine * 0.9 && roadKm <= straightLine * 3.0) {
+            return roadKm;
+          }
         }
       }
     }
@@ -90,9 +98,8 @@ export async function fetchRoadDistanceKm(
     console.warn('OSRM road routing failed/timed out, using scaled city distance:', err);
   }
 
-  // Fallback: Haversine straight-line distance scaled by 1.35 for Kolkata city driving routes
-  const straightLine = calculateDistanceKm(lat1, lon1, lat2, lon2);
-  return Math.round(straightLine * 1.35 * 100) / 100;
+  // Fallback: Haversine straight-line distance scaled by 1.30 for Kolkata city driving routes
+  return Math.round(straightLine * 1.30 * 100) / 100;
 }
 
 /**

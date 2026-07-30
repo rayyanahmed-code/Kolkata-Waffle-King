@@ -1,46 +1,25 @@
-import React, { useRef } from 'react';
+import React from 'react';
 import { motion } from 'motion/react';
-import { CheckCircle2, MessageCircle, ArrowLeft, Camera, ShieldAlert, Image as ImageIcon, Upload, Trash2, Check } from 'lucide-react';
+import { CheckCircle2, MessageCircle, ArrowLeft, Camera, ShieldAlert } from 'lucide-react';
 import { OrderState } from '../types';
 
 interface PaymentConfirmationScreenProps {
   order: OrderState;
   onContinueToWhatsApp: () => void;
   onBackToPayment: () => void;
-  onUpdateScreenshot: (dataUrl: string | undefined, file: File | undefined) => void;
 }
 
 export const PaymentConfirmationScreen: React.FC<PaymentConfirmationScreenProps> = ({
   order,
   onContinueToWhatsApp,
   onBackToPayment,
-  onUpdateScreenshot,
 }) => {
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const { customerName, paymentScreenshot } = order;
+  const { customerName } = order;
 
   const rawFirstName = customerName ? customerName.trim().split(/\s+/)[0] : '';
   const firstName = rawFirstName
     ? rawFirstName.charAt(0).toUpperCase() + rawFirstName.slice(1)
     : 'Friend';
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = () => {
-        onUpdateScreenshot(reader.result as string, file);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleRemoveScreenshot = () => {
-    onUpdateScreenshot(undefined, undefined);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-  };
 
   return (
     <motion.div
@@ -58,101 +37,35 @@ export const PaymentConfirmationScreen: React.FC<PaymentConfirmationScreenProps>
       {/* Title & Headers */}
       <div className="space-y-1.5">
         <span className="inline-block px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-700 border border-emerald-500/20 text-[11px] font-extrabold uppercase tracking-wider">
-          ✅ Payment Step Ready
+          ✅ Order Summary Ready
         </span>
         <h2 className="font-serif font-extrabold text-2xl text-[#2C1810]">
           Ready to Send, {firstName}!
         </h2>
         <p className="text-xs text-[#2C1810]/80 leading-relaxed max-w-sm mx-auto font-medium">
-          {paymentScreenshot
-            ? 'Your payment screenshot is attached below. Tap the button to launch WhatsApp!'
-            : 'Please pick your payment screenshot from gallery so you can send it along on WhatsApp.'}
+          Your order details are formatted and ready. Tap the button below to launch WhatsApp and send your order.
         </p>
       </div>
 
-      {/* Screenshot Selector / Preview Card */}
-      <div className="bg-[#2C1810] text-[#FAF6F0] p-4 rounded-2xl border border-[#543123] text-left space-y-3 shadow-lg">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-xs font-bold text-[#E5A93B]">
-            <Camera className="w-4 h-4 text-[#E5A93B]" />
-            <span>Payment Proof Screenshot</span>
-          </div>
-          {paymentScreenshot && (
-            <span className="text-[10px] font-bold text-emerald-400 bg-emerald-950 px-2 py-0.5 rounded-full border border-emerald-700/50 flex items-center gap-1">
-              <Check className="w-3 h-3" /> Ready
-            </span>
-          )}
+      {/* Screenshot Instructions & Reminders Box */}
+      <div className="bg-[#2C1810] text-[#FAF6F0] p-4.5 rounded-2xl border border-[#543123] text-left space-y-3 shadow-lg">
+        <div className="flex items-center gap-2 text-xs font-bold text-[#E5A93B]">
+          <Camera className="w-4 h-4 text-[#E5A93B]" />
+          <span>Important Payment Screenshot Reminder</span>
         </div>
 
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          onChange={handleFileChange}
-          className="hidden"
-          id="confirm-screenshot-input"
-        />
+        <div className="space-y-2 text-xs text-[#FAF6F0]/90">
+          <p className="leading-relaxed bg-[#180E0A] p-3 rounded-xl border border-[#3D2218]">
+            📸 <strong>Attach Screenshot in WhatsApp:</strong> When WhatsApp opens, tap the <strong>attachment / camera icon (📎)</strong> at the bottom of the chat to attach your payment screenshot before hitting Send.
+          </p>
+          <p className="text-[11px] text-[#E5A93B] font-medium leading-tight px-1">
+            ⚡ <em>Tip: Orders are verified immediately upon receiving your payment proof!</em>
+          </p>
+        </div>
 
-        {paymentScreenshot ? (
-          <div className="bg-[#180E0A] p-3 rounded-xl border border-[#3D2218] flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <div className="w-16 h-16 rounded-xl overflow-hidden border-2 border-emerald-400 bg-black flex-shrink-0 shadow-md">
-                <img
-                  src={paymentScreenshot}
-                  alt="Payment Screenshot Preview"
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <div className="space-y-0.5">
-                <div className="text-xs font-bold text-emerald-400 flex items-center gap-1">
-                  <CheckCircle2 className="w-3.5 h-3.5 fill-current text-emerald-400" />
-                  <span>Screenshot Ready</span>
-                </div>
-                <p className="text-[10px] text-[#FAF6F0]/70">
-                  Tap button below to share directly via WhatsApp
-                </p>
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-1">
-              <label
-                htmlFor="confirm-screenshot-input"
-                className="px-2.5 py-1 rounded-lg bg-[#3D2218] hover:bg-[#543123] text-[#E5A93B] font-bold text-[10px] cursor-pointer text-center transition-colors"
-              >
-                Change
-              </label>
-              <button
-                type="button"
-                onClick={handleRemoveScreenshot}
-                className="p-1 rounded-lg bg-rose-950/80 hover:bg-rose-900 text-rose-300 text-center transition-colors cursor-pointer flex items-center justify-center"
-                title="Remove Screenshot"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          </div>
-        ) : (
-          <label
-            htmlFor="confirm-screenshot-input"
-            className="w-full py-3.5 px-3 rounded-xl border-2 border-dashed border-[#E5A93B]/70 bg-[#180E0A] hover:bg-[#180E0A]/80 transition-all cursor-pointer flex items-center justify-center gap-2 text-center"
-          >
-            <div className="w-8 h-8 rounded-full bg-[#E5A93B] text-[#180E0A] flex items-center justify-center font-bold">
-              <Upload className="w-4 h-4" />
-            </div>
-            <div className="text-left">
-              <span className="text-xs font-bold text-[#E5A93B] block">
-                Choose Screenshot from Gallery
-              </span>
-              <span className="text-[10px] text-[#FAF6F0]/70">
-                Select payment receipt picture before opening WhatsApp
-              </span>
-            </div>
-          </label>
-        )}
-
-        <div className="flex items-start gap-1.5 text-[10px] text-[#FAF6F0]/70 pt-1 border-t border-[#3D2218]">
+        <div className="flex items-start gap-1.5 text-[10px] text-[#FAF6F0]/70 pt-2 border-t border-[#3D2218]">
           <ShieldAlert className="w-3.5 h-3.5 text-amber-400 flex-shrink-0 mt-0.5" />
-          <span>Orders are confirmed immediately upon receiving the payment screenshot.</span>
+          <span>Orders without payment proof may not be confirmed.</span>
         </div>
       </div>
 
@@ -166,7 +79,7 @@ export const PaymentConfirmationScreen: React.FC<PaymentConfirmationScreenProps>
           className="w-full py-4 px-5 rounded-2xl font-extrabold text-sm text-white shadow-xl transition-all flex items-center justify-center gap-2.5 bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-600 hover:from-emerald-500 hover:to-teal-500 shadow-emerald-900/30 cursor-pointer active:scale-98"
         >
           <MessageCircle className="w-5 h-5 fill-current" />
-          <span>📲 Send Order & Screenshot on WhatsApp</span>
+          <span>📲 Send Order Details on WhatsApp</span>
         </motion.button>
 
         {/* Secondary Button: Back */}
