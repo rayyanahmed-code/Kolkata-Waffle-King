@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { motion } from 'motion/react';
-import { CreditCard, CheckCircle2, Copy, Check, ArrowLeft, QrCode, Sparkles, Camera, ShieldCheck, Lock, AlertTriangle, RefreshCw, Zap } from 'lucide-react';
+import { CreditCard, CheckCircle2, ArrowLeft, ShieldCheck, Lock, AlertTriangle, RefreshCw, Zap } from 'lucide-react';
 import { OrderState } from '../types';
-import { restaurantConfig } from '../config/restaurantConfig';
 import { calculateDeliveryFee, getOrderDeliveryDistance, calculateParcelCharge } from '../utils/delivery';
 import { processRazorpayPayment, RazorpaySuccessResult } from '../utils/razorpay';
 
@@ -17,7 +16,6 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
   onPaymentCompleted,
   onBackToSummary,
 }) => {
-  const [copied, setCopied] = useState(false);
   const [isProcessingRazorpay, setIsProcessingRazorpay] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
   
@@ -34,9 +32,6 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
       : null
   );
 
-  const [utrInput, setUtrInput] = useState('');
-  const [showUtrVerification, setShowUtrVerification] = useState(false);
-
   const { customerName, customerPhone, cart, orderType, location } = order;
 
   // Calculate bill totals
@@ -48,26 +43,6 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
 
   const advanceAmount = Math.ceil(grandTotal * 0.5);
   const remainingAmount = grandTotal - advanceAmount;
-
-  const upiId = restaurantConfig.upi?.upiId || '7003459674@kotakbank';
-  const payeeName = restaurantConfig.upi?.payeeName || 'MD SAMIR IQBAL';
-  const cleanPayeeName = payeeName.replace(/%20/g, ' ');
-
-  // Clean QR Code URL
-  const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(
-    `upi://pay?pa=${upiId}&pn=${cleanPayeeName}&am=${advanceAmount}&cu=INR`
-  )}`;
-
-  const handleCopyUpi = (e?: React.MouseEvent) => {
-    if (e) e.stopPropagation();
-    try {
-      navigator.clipboard.writeText(upiId);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2500);
-    } catch (err) {
-      console.warn('Clipboard write failed:', err);
-    }
-  };
 
   // Launch Razorpay Payment Gateway
   const handleRazorpayPay = async () => {
@@ -90,29 +65,9 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
     });
   };
 
-  // Manual UTR Verification fallback for direct UPI QR payment
-  const handleVerifyUtr = () => {
-    const cleanUtr = utrInput.trim();
-    if (cleanUtr.length < 8) {
-      setPaymentError('Please enter a valid 12-digit UPI UTR / Transaction Reference number from your payment app.');
-      return;
-    }
-
-    const verifiedResult: RazorpaySuccessResult = {
-      paymentId: `upi_ref_${cleanUtr}`,
-      orderId: `ord_upi_${Date.now()}`,
-      verified: true,
-      timestamp: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true }),
-      amount: advanceAmount
-    };
-
-    setVerificationResult(verifiedResult);
-    setPaymentError(null);
-  };
-
   const handleProceedNext = () => {
     if (!verificationResult || !verificationResult.verified) {
-      setPaymentError('🔒 Scam Prevention Active: Please complete payment via Razorpay or verify your payment transaction ID before proceeding.');
+      setPaymentError('🔒 Scam Prevention Active: Please complete payment via Razorpay before proceeding.');
       return;
     }
 
@@ -266,81 +221,8 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
               </>
             )}
           </motion.button>
-
-          {/* Alternative Direct QR Payment Dropdown Toggle */}
-          <div className="pt-2 border-t border-[#E6D7C3]">
-            <button
-              type="button"
-              onClick={() => setShowUtrVerification(!showUtrVerification)}
-              className="text-xs font-bold text-[#2C1810]/80 hover:text-[#2C1810] underline flex items-center justify-center gap-1 mx-auto"
-            >
-              <QrCode className="w-3.5 h-3.5 text-[#E5A93B]" />
-              <span>Or Pay directly using Sameer's UPI QR Code / UTR</span>
-            </button>
-          </div>
         </div>
       ) : null}
-
-      {/* DIRECT UPI QR CODE & MANUAL UTR VERIFICATION (Expandable or Fallback) */}
-      {(showUtrVerification || !verificationResult?.verified) && (
-        <div className="bg-[#FAF6F0] border border-[#E6D7C3] p-4.5 rounded-3xl shadow-lg text-center space-y-4">
-          <div className="bg-[#2C1810] text-[#E5A93B] p-2.5 rounded-2xl text-xs font-bold flex items-center justify-center gap-1.5">
-            <QrCode className="w-4 h-4 text-[#E5A93B]" />
-            <span>Sameer's Direct UPI QR Code ({payeeName})</span>
-          </div>
-
-          <div className="w-full max-w-xs mx-auto bg-gradient-to-b from-[#180E0A] via-[#2C1810] to-[#801030] p-3.5 rounded-3xl shadow-xl border border-[#E5A93B]/50 text-white space-y-3">
-            <div className="bg-white p-2 rounded-2xl mx-auto w-44 h-44 flex items-center justify-center">
-              <img
-                src={qrCodeUrl}
-                alt="UPI QR Code - Sameer"
-                className="w-full h-full object-contain"
-              />
-            </div>
-
-            <div className="space-y-1 text-center">
-              <div className="text-xs font-bold text-[#FAF6F0]">{payeeName}</div>
-              <div className="flex items-center justify-center gap-2 text-xs">
-                <span className="font-mono bg-black/50 px-2 py-0.5 rounded-md border border-white/20 text-[#E5A93B] font-bold text-[11px]">
-                  {upiId}
-                </span>
-                <button
-                  type="button"
-                  onClick={handleCopyUpi}
-                  className="px-2 py-0.5 rounded-md bg-white/20 hover:bg-white/30 text-white transition-colors cursor-pointer text-[10px]"
-                >
-                  {copied ? 'Copied' : 'Copy'}
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {!verificationResult?.verified && (
-            <div className="bg-white p-3.5 rounded-2xl border border-[#E6D7C3] space-y-2 text-left">
-              <label className="text-xs font-bold text-[#2C1810] flex items-center gap-1">
-                <ShieldCheck className="w-3.5 h-3.5 text-amber-600" />
-                <span>Verify Direct UPI UTR / Transaction Ref</span>
-              </label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="text"
-                  value={utrInput}
-                  onChange={(e) => setUtrInput(e.target.value)}
-                  placeholder="Enter 12-digit UTR from GPay/PhonePe"
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-xl text-xs font-mono focus:outline-none focus:ring-2 focus:ring-[#E5A93B]"
-                />
-                <button
-                  type="button"
-                  onClick={handleVerifyUtr}
-                  className="px-3 py-2 bg-[#2C1810] text-[#E5A93B] hover:bg-[#3D2218] rounded-xl text-xs font-bold transition-colors cursor-pointer flex-shrink-0"
-                >
-                  Verify Ref
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
 
       {/* ANTI-SCAM REMINDER NOTICE */}
       <div className="bg-[#FAF6F0] border border-[#E6D7C3] p-4 rounded-3xl shadow-md space-y-2 text-left">
@@ -351,7 +233,7 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
           </h4>
         </div>
         <p className="text-xs text-[#2C1810]/80 leading-relaxed">
-          To prevent fake or scam orders, WhatsApp order messages are strictly locked until a genuine payment transaction (via Razorpay or verified UPI Ref) is confirmed. Once verified, you will be able to send your order details along with your payment screenshot on WhatsApp!
+          To prevent fake or scam orders, WhatsApp order messages are strictly locked until a genuine payment transaction via Razorpay is confirmed. Once verified, you will be able to send your order details on WhatsApp!
         </p>
       </div>
 
@@ -386,3 +268,4 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
 function cartSubtotal(cart: any[]) {
   return cart.reduce((sum, item) => sum + item.item.price * item.quantity, 0);
 }
+
