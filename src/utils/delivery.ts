@@ -12,15 +12,23 @@ export function isBeverageCategory(category: string): boolean {
 /**
  * Calculates parcel box charge for the order.
  * Charges ₹5 per item unit for all items EXCEPT beverages.
+ * Special offer worth ₹599 gets ₹10 (2 x ₹5) per combo item.
  */
 export function calculateParcelCharge(
-  cart: Array<{ item: { category: string }; quantity: number }>
+  cart: Array<{ item: { category: string; price?: number; id?: string }; quantity: number }>
 ): number {
   return cart.reduce((total, cartItem) => {
-    if (!isBeverageCategory(cartItem.item.category)) {
-      return total + 5 * cartItem.quantity;
+    if (isBeverageCategory(cartItem.item.category)) {
+      return total;
     }
-    return total;
+    // Special offer worth 599 gets 2 boxes per combo = ₹10 (2 x ₹5)
+    if (
+      cartItem.item.category === 'special_offers' &&
+      (cartItem.item.price === 599 || cartItem.item.id === 'sp-01')
+    ) {
+      return total + 10 * cartItem.quantity;
+    }
+    return total + 5 * cartItem.quantity;
   }, 0);
 }
 

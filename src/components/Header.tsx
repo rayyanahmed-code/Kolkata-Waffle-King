@@ -1,7 +1,8 @@
 import React from 'react';
 import { Phone, MapPin } from 'lucide-react';
 import { restaurantConfig } from '../config/restaurantConfig';
-const LOGO_DATA_URI = "/logo.jpg";
+import { LOGO_DATA_URI } from '../assets/logoData';
+
 interface HeaderProps {
   cartItemCount?: number;
   totalAmount?: number;

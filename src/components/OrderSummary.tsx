@@ -64,6 +64,18 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
           </span>
         </div>
 
+        {/* Free Delivery Notice Banner */}
+        {orderType === 'delivery' && (
+          <div className="bg-amber-500/10 border-2 border-amber-500/40 p-2.5 rounded-xl text-center space-y-0.5 shadow-sm">
+            <span className="text-xs font-black text-[#2C1810] tracking-wide block uppercase">
+              🚨FREE DELIVERY NOTICE🚨
+            </span>
+            <span className="text-[11px] font-bold text-[#2C1810]/90 block">
+              Delivery charges are <b>🚨FREE🚨</b> if you order within <b>2 km</b> with a minimum order value of <b>₹300</b>!
+            </span>
+          </div>
+        )}
+
         {/* Customer Details */}
         <div className="grid grid-cols-2 gap-2 text-xs bg-white/70 p-2.5 rounded-xl border border-[#E6D7C3]">
           <div className="flex items-center gap-1.5 text-[#2C1810]/80">
@@ -169,18 +181,30 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
 
           <div className="flex justify-between text-[#FAF6F0]/80">
             <span className="flex items-center gap-1">
-              <span>Parcel Box</span>
-              {nonBeverageCount > 0 && (
-                <span className="text-[10px] text-[#FAF6F0]/60">({nonBeverageCount} × ₹5)</span>
-              )}
+              <span>Parcel Box Charge</span>
             </span>
             <span>₹{parcelCharge}</span>
           </div>
 
           {orderType === 'delivery' && (
-            <div className="flex justify-between text-[#FAF6F0]/80">
-              <span>Delivery Fee {distanceKm !== null ? `(${distanceKm.toFixed(2)} km)` : ''}</span>
-              <span>{deliveryFee === 0 ? <span className="text-emerald-400 font-bold">FREE</span> : `₹${deliveryFee}`}</span>
+            <div className="space-y-1">
+              <div className="flex justify-between text-[#FAF6F0]/80">
+                <span>Delivery Fee {distanceKm !== null ? `(${distanceKm.toFixed(2)} km)` : ''}</span>
+                <span>
+                  {deliveryFee === 0 ? (
+                    <span className="text-emerald-400 font-extrabold flex items-center gap-1">
+                      🚨FREE🚨
+                    </span>
+                  ) : (
+                    `₹${deliveryFee}`
+                  )}
+                </span>
+              </div>
+              {subtotal < 300 && distanceKm !== null && distanceKm <= 2.0 && (
+                <div className="text-[10px] text-amber-300 font-extrabold text-right">
+                  Add ₹{300 - subtotal} more item value to qualify for 🚨FREE🚨 Delivery!
+                </div>
+              )}
             </div>
           )}
 

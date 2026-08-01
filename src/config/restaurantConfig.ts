@@ -1,7 +1,7 @@
 export const restaurantConfig = {
   name: 'Kolkata Waffle King',
   tagline: 'Freshly Baked Happiness in Every Bite',
-  whatsappNumber: '7003459674', // Restaurant's receiving WhatsApp number
+  whatsappNumber: '7449785471', // Restaurant's receiving WhatsApp number
   whatsappCountryCode: '91',
   currencySymbol: '₹',
   address: '98 Dr Sundari Mohan Avenue near Baba Tea, opposite Linton Post Office, Kolkata, West Bengal 700014',

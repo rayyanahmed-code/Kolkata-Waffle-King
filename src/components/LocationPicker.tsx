@@ -124,6 +124,16 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
 
   return (
     <div className="w-full space-y-3 my-2">
+      {/* Free Delivery Banner */}
+      <div className="bg-[#2C1810] border-2 border-[#E5A93B] p-2.5 rounded-2xl text-center shadow-md space-y-0.5">
+        <div className="text-xs font-black text-[#E5A93B] uppercase tracking-wide">
+          🚨 FREE DELIVERY OFFER 🚨
+        </div>
+        <div className="text-[11px] font-bold text-[#FAF6F0]">
+          Delivery charges are <b>🚨FREE🚨</b> if you order within <b>2 km</b> with a minimum order value of <b>₹300</b>!
+        </div>
+      </div>
+
       {errorMsg && (
         <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs flex items-start gap-2">
           <AlertCircle className="w-4 h-4 flex-shrink-0 text-amber-400 mt-0.5" />

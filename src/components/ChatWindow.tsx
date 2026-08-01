@@ -668,6 +668,18 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                 <span>Back to {order.orderType === 'delivery' ? 'Location' : 'Order Type'}</span>
               </button>
             </div>
+
+            {/* Free Delivery Promo Banner */}
+            {order.orderType === 'delivery' && (
+              <div className="bg-gradient-to-r from-amber-500/20 via-amber-400/30 to-amber-500/20 border-2 border-[#E5A93B] p-2.5 rounded-2xl text-center shadow-lg space-y-0.5">
+                <span className="text-xs font-black text-[#E5A93B] uppercase tracking-wide block">
+                  🚨 FREE DELIVERY OFFER 🚨
+                </span>
+                <span className="text-[11px] font-bold text-[#FAF6F0] block">
+                  Delivery charges are <b>🚨FREE🚨</b> if you order within <b>2 km</b> with a minimum order value of <b>₹300</b>!
+                </span>
+              </div>
+            )}
             {/* Category Pills & Search */}
             <div className="bg-[#2C1810] p-2.5 rounded-2xl border border-[#543123] shadow-lg space-y-2">
               <CategorySelector

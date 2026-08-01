@@ -5,9 +5,9 @@ import { calculateDeliveryFee, getOrderDeliveryDistance, calculateParcelCharge }
 export function formatWhatsAppMessage(order: OrderState): string {
   const { customerName, customerPhone, orderType, location, cart, specialInstructions } = order;
 
-  // Calculate items list formatted
+  // Calculate items list formatted with item category
   const itemsText = cart
-    .map((c) => `• ${c.item.name} × ${c.quantity} (₹${c.item.price * c.quantity})`)
+    .map((c) => `• ${c.item.name} [Category: ${c.item.subcategory || c.item.category}] × ${c.quantity} (₹${c.item.price * c.quantity})`)
     .join('\n');
 
   const subtotal = cart.reduce((acc, c) => acc + c.item.price * c.quantity, 0);
@@ -44,11 +44,13 @@ export function formatWhatsAppMessage(order: OrderState): string {
   const instructionsText = specialInstructions && specialInstructions.trim() ? specialInstructions.trim() : 'None';
   const distanceText = distanceKm !== null ? `${distanceKm.toFixed(2)} km` : 'Manual Address';
 
+  const deliveryFeeLabel = deliveryFee === 0 ? '🚨FREE🚨 (₹300+ order within 2 km)' : `₹${deliveryFee}`;
+
   const billingSection = isDelivery
     ? `💰 *Subtotal:* ₹${subtotal}
 📦 *Parcel Box:* ₹${parcelFee}
 📏 *Delivery Distance:* ${distanceText}
-🚚 *Delivery Fee:* ₹${deliveryFee}${deliveryFee === 0 ? ' (FREE)' : ''}
+🚚 *Delivery Fee:* ${deliveryFeeLabel}
 💵 *Total Amount:* ₹${grandTotal}`
     : `💰 *Subtotal:* ₹${subtotal}
 📦 *Parcel Box:* ₹${parcelFee}
