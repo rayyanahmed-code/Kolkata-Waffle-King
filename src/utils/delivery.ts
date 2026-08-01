@@ -10,40 +10,45 @@ export function isBeverageCategory(category: string): boolean {
 }
 
 /**
- * Calculates parcel box charge for the order.
- * Charges ₹5 per item unit for all items EXCEPT beverages.
- * Special offer worth ₹599 gets ₹10 (2 x ₹5) per combo item.
+ * Returns total count of parcel boxes required for the order.
+ * All items EXCEPT beverages require 1 box per unit.
+ * Special offer worth ₹599 requires 2 boxes per unit.
  */
-export function calculateParcelCharge(
+export function getParcelBoxCount(
   cart: Array<{ item: { category: string; price?: number; id?: string }; quantity: number }>
 ): number {
   return cart.reduce((total, cartItem) => {
     if (isBeverageCategory(cartItem.item.category)) {
       return total;
     }
-    // Special offer worth 599 gets 2 boxes per combo = ₹10 (2 x ₹5)
+    // Special offer worth 599 gets 2 boxes per combo
     if (
       cartItem.item.category === 'special_offers' &&
       (cartItem.item.price === 599 || cartItem.item.id === 'sp-01')
     ) {
-      return total + 10 * cartItem.quantity;
+      return total + 2 * cartItem.quantity;
     }
-    return total + 5 * cartItem.quantity;
+    return total + cartItem.quantity;
   }, 0);
+}
+
+/**
+ * Calculates parcel box charge for the order.
+ * Charges ₹5 per parcel box.
+ */
+export function calculateParcelCharge(
+  cart: Array<{ item: { category: string; price?: number; id?: string }; quantity: number }>
+): number {
+  return getParcelBoxCount(cart) * 5;
 }
 
 /**
  * Returns the total count of non-beverage items in cart.
  */
 export function getNonBeverageItemCount(
-  cart: Array<{ item: { category: string }; quantity: number }>
+  cart: Array<{ item: { category: string; price?: number; id?: string }; quantity: number }>
 ): number {
-  return cart.reduce((total, cartItem) => {
-    if (!isBeverageCategory(cartItem.item.category)) {
-      return total + cartItem.quantity;
-    }
-    return total;
-  }, 0);
+  return getParcelBoxCount(cart);
 }
 
 /**

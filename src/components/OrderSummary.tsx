@@ -3,7 +3,7 @@ import { motion } from 'motion/react';
 import { ShoppingBag, MapPin, Phone, User, MessageSquare, ArrowRight, ArrowLeft, ShieldCheck, Truck, Store, ExternalLink } from 'lucide-react';
 import { OrderState } from '../types';
 import { restaurantConfig } from '../config/restaurantConfig';
-import { calculateDeliveryFee, getOrderDeliveryDistance, calculateParcelCharge, getNonBeverageItemCount } from '../utils/delivery';
+import { calculateDeliveryFee, getOrderDeliveryDistance, calculateParcelCharge, getParcelBoxCount } from '../utils/delivery';
 import { WhatsAppButton } from './WhatsAppButton';
 
 interface OrderSummaryProps {
@@ -23,7 +23,7 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
 
   const subtotal = cart.reduce((sum, item) => sum + item.item.price * item.quantity, 0);
   const parcelCharge = calculateParcelCharge(cart);
-  const nonBeverageCount = getNonBeverageItemCount(cart);
+  const parcelBoxCount = getParcelBoxCount(cart);
   const distanceKm = orderType === 'delivery' ? getOrderDeliveryDistance(location) : null;
   const deliveryFee = orderType === 'delivery' ? calculateDeliveryFee(distanceKm, subtotal) : 0;
   const totalAmount = subtotal + parcelCharge + deliveryFee;
@@ -181,7 +181,10 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
 
           <div className="flex justify-between text-[#FAF6F0]/80">
             <span className="flex items-center gap-1">
-              <span>Parcel Box Charge</span>
+              <span>Parcel Box</span>
+              {parcelBoxCount > 0 && (
+                <span className="text-[10px] text-[#FAF6F0]/60">({parcelBoxCount} x ₹5)</span>
+              )}
             </span>
             <span>₹{parcelCharge}</span>
           </div>
